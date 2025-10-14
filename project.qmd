@@ -15,25 +15,25 @@ The project will accept audio through a **standard 1/8-inch (3.5 mm) auxiliary i
 
 ### Functional Specifications
 
-- **Input / Output**:  
+- [ ] **Input / Output**:  
   Audio is input via a 1/8-inch aux cable and output through the digital lab’s speaker system.
 
-- **Bypass Behavior**:  
+- [ ] **Bypass Behavior**:  
   When all EQ knobs are in their default (neutral) positions, the output should closely match the original input audio.
 
-- **Frequency Bands**:  
+- [ ] **Frequency Bands**:  
   The equalizer will feature three independently adjustable bands:
   - **Low band:** ~100 Hz – 400 Hz  
   - **Mid band:** ~400 Hz – 2 kHz  
   - **High band:** ~2 kHz – 8 kHz  
 
-- **Control Interface:**  
+- [ ] **Control Interface:**  
   Each band will have its own **potentiometer** for analog gain adjustment (boost/cut).
 
-- **Latency:**  
+- [ ] **Latency:**  
   The system will maintain real-time operation with **< 50 ms latency**, ensuring audio remains synchronized with video sources such as YouTube.
 
-- **Verification:**  
+- [ ] **Verification:**  
   The final report will include theoretical frequency responses for each band and confirm them via hardware measurements.
 
 ---
@@ -69,14 +69,6 @@ Total external parts cost: **~$12** (excluding lab stock components).
 
 ### Block Diagram
 
-```mermaid
-graph LR
-    A[Audio Input<br/>(1/8'' Aux)] --> B[ADC<br/>(PCM1808)]
-    B --> C[FPGA<br/>IIR Filtering]
-    C --> D[DAC<br/>(PCM5102)]
-    D --> E[Speaker Output]
+![](flow_chart.png)
+<figcaption> Figure 1: Flow Chart of Partitioning and Connections.</figcaption>
 
-    F[MCU] -->|SPI| C
-    F -->|Analog Inputs| G[3 Potentiometers]
-    C -->|I2C / I2S| B
-    C -->|I2C / I2S| D
