@@ -1,0 +1,6 @@
+---
+title: "Project: Real Time 3-Band EQ Filtering"
+---
+
+## Group: Drake Gonzales & Eoin O'Connell
+
