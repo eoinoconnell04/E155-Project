@@ -72,3 +72,28 @@ Total external parts cost: **~$12** (excluding lab stock components).
 ![](flow_chart.png)
 <figcaption> Figure 1: Flow Chart of Partitioning and Connections.</figcaption>
 
+
+### Performance Calculations
+
+The key performance characteristics of our EQ filter are defined by the sampling rate, ADC/DAC bit rate, and FPGA processing speed.
+
+**Sampling Rate / Nyquist:**  
+By the Shannon–Nyquist theorem, the sampling frequency must exceed twice the highest signal frequency. Since our high band extends to ~8 kHz, \(f_s > 16 kHz\). We will use **48 kHz**, providing a 24 kHz Nyquist limit and headroom for filtering.
+
+**Bit Rate:**  
+At 48 kHz, 24 bits/sample, and stereo audio,  
+\(R = f_s × B × C = 48{,}000 × 24 × 2 ≈ 2.3 Mbps\).  
+With 32-bit I²S frames, the bit clock is ~3 MHz—easily handled by the FPGA.
+
+**FPGA Throughput and Latency:**  
+With a 50 MHz fabric clock, the FPGA has  
+\(50 MHz / 48 kHz ≈ 1000\) cycles per sample—ample for three IIR filters.  
+The ADC/DAC and pipeline add only a few samples of delay (<1 ms total).  
+Even with conservative buffering, end-to-end latency remains **≪ 50 ms**, meeting our real-time requirement.
+
+**Resolution / Noise:**  
+24-bit audio provides ~146 dB theoretical SNR; internal 32-bit accumulation will preserve precision and avoid quantization noise.
+
+Overall, the design easily meets real-time performance needs: 48 kHz sample rate, <1 ms latency, and sufficient precision for transparent audio quality.
+
+
