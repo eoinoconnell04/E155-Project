@@ -78,16 +78,26 @@ Total external parts cost: **~$12** (excluding lab stock components).
 The key performance characteristics of our EQ filter are defined by the sampling rate, ADC/DAC bit rate, and FPGA processing speed.
 
 **Sampling Rate / Nyquist:**  
-By the Shannon–Nyquist theorem, the sampling frequency must exceed twice the highest signal frequency. Since our high band extends to ~8 kHz, \(f_s > 16 kHz\). We will use **48 kHz**, providing a 24 kHz Nyquist limit and headroom for filtering.
+By the Shannon–Nyquist theorem, the sampling frequency must exceed twice the highest signal frequency. Since our high band extends to ~8 kHz, $f_s > 16\,\text{kHz}$.  
+We will use **48 kHz**, providing a 24 kHz Nyquist limit and headroom for filtering.
 
 **Bit Rate:**  
-At 48 kHz, 24 bits/sample, and stereo audio,  
-\(R = f_s × B × C = 48{,}000 × 24 × 2 ≈ 2.3 Mbps\).  
-With 32-bit I²S frames, the bit clock is ~3 MHz—easily handled by the FPGA.
+At 48 kHz, 24 bits/sample, and stereo audio:  
+
+$$
+R = f_s \times B \times C = 48{,}000 \times 24 \times 2 \approx 2.3\,\text{Mbps}
+$$  
+
+With 32-bit I²S frames, the bit clock is approximately **3 MHz**, easily handled by the FPGA.
 
 **FPGA Throughput and Latency:**  
-With a 50 MHz fabric clock, the FPGA has  
-\(50 MHz / 48 kHz ≈ 1000\) cycles per sample—ample for three IIR filters.  
+With a 50 MHz fabric clock:  
+
+$$
+\frac{50\,\text{MHz}}{48\,\text{kHz}} \approx 1000
+$$  
+
+cycles per sample—ample for three IIR filters.  
 The ADC/DAC and pipeline add only a few samples of delay (<1 ms total).  
 Even with conservative buffering, end-to-end latency remains **≪ 50 ms**, meeting our real-time requirement.
 
