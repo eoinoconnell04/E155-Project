@@ -78,7 +78,7 @@ Total external parts cost: **~$12** (excluding lab stock components).
 The key performance characteristics of our EQ filter are defined by the sampling rate, ADC/DAC bit rate, and FPGA processing speed.
 
 **Sampling Rate / Nyquist:**  
-By the Shannon–Nyquist theorem, the sampling frequency must exceed twice the highest signal frequency. Since our high band extends to ~8 kHz, $f_s > 16\,\text{kHz}$.  
+By the Shannon–Nyquist theorem, the sampling frequency must exceed twice the highest signal frequency. Since the human ear can hear to around ~20 kHz, $f_s > 40\,\text{kHz}$.  
 We will use **48 kHz**, providing a 24 kHz Nyquist limit and headroom for filtering.
 
 **Bit Rate:**  
