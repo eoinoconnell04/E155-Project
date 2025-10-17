@@ -1,5 +1,5 @@
 ---
-title: "Project: Real Time 3-Band EQ Filtering"
+title: "Project: Real Time Stereo 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
 ---
 
@@ -7,16 +7,19 @@ author: "Drake Gonzales & Eoin O'Connell"
 
 ### Overview
 
-We will create a **real-time 3-band equalizer (EQ)** that can independently remove or boost lows, mids, and highs in an incoming audio signal. The system will feature **three control knobs**, one for each frequency range.
+We will create a **real-time 3-band equalizer (EQ)** that can independently remove or boost lows, mids, and highs in an incoming stereo audio signal. The system will feature **three control knobs**, one for each frequency range.
 
-The project will accept audio through a **standard 1/8-inch (3.5 mm) auxiliary input**, allowing playback from a computer or mobile device. The analog audio signal will be digitized by an **ADC**, processed in real time by an **FPGA** using digital filtering, and then converted back to analog via a **DAC** for playback through a speaker.
+The project will accept audio through a **standard 1/8-inch (3.5 mm) auxiliary input**, allowing playback from a computer or mobile device. The analog audio signal will be digitized by an **ADC**, processed in real time by an **FPGA** using digital filtering, and then converted back to analog via a **DAC** for playback through a pair of speakers (left and right).
 
 ---
 
 ### Functional Specifications
 
 - [ ] **Input / Output**:  
-  Audio is input via a 1/8-inch aux cable and output through the digital lab’s speaker system.
+  Audio is input via a 1/8-inch aux cable and output through a pair of speakers in the digital lab.
+
+- [ ] **Left & Right Channels**:  
+  Audio is correctly separated for left and right channels (if audio source plays stereo audio).
 
 - [ ] **Bypass Behavior**:  
   When all EQ knobs are in their default (neutral) positions, the output should closely match the original input audio.
@@ -106,4 +109,6 @@ Even with conservative buffering, end-to-end latency remains **≪ 50 ms**, meet
 
 Overall, the design easily meets real-time performance needs: 48 kHz sample rate, <1 ms latency, and sufficient precision for transparent audio quality.
 
+**LUT Usage**
 
+Because the filtering is duplicated, we duplicate the filtering hardware. Each channel has 3 cascading filters (low, mid, high), which consist of 5 biquads. That means that we do $3 x 5 x 2 = 30$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 3.75 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 96 KHz, this will be easy as the FGPA can run on order of MHz.
