@@ -72,6 +72,7 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 - Mess up wiring between components
 - Output clipping at high volume damaging speakers or hearing.
 - Exceeding FPGA LUT's
+
 ---
 
 ### Hardware Components
