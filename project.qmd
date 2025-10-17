@@ -71,7 +71,7 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 - High-frequency content aliasing into the audio band if the ADC sample rate or analog filter are insufficient.
 - Mess up wiring between components
 - Output clipping at high volume damaging speakers or hearing.
-- Exceeding FPGA LUT's
+- Exceeding FPGA LUT's, and more importantly, DSP slices
 
 ---
 
