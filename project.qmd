@@ -85,7 +85,9 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 | **Miscellaneous Components** | n/a | Op-amps, resistors, capacitors, wires | Analog | Stockroom | Used for signal conditioning, biasing, and connections |
 
 **Subtotal parts cost:** ~**$13** (excluding lab stock components).
+
 **Shipping and Taxes:** ~**$8**
+
 **Total external parts cost:** ~**$21**.
 
 ---
