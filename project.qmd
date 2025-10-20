@@ -51,7 +51,6 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 - Read **three analog potentiometer inputs** (one per frequency band).
 - Compute **IIR filter coefficients** based on knob positions.
 - Transmit updated coefficients to the FPGA via **SPI**.
-- Optionally control **DAC mute pin** for safe startup/shutdown.
 
 ### **Analog to Digital Converter (ADC) Responsibilities**
 - Convert analog data to digital data
@@ -68,21 +67,26 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 - High-frequency content aliasing into the audio band if the ADC sample rate or analog filter are insufficient.
 - Mess up wiring between components
 - Output clipping at high volume damaging speakers or hearing.
-- Exceeding FPGA LUT's, and more importantly, DSP slices
+- Exceeding FPGA LUT's, and more importantly, **DSP slices**
+- - Our FPGA Contains only 8 16x16 DSP slices, requiring clever pipelining and multiplexing to filter all signals in time
 
 ---
 
 ### Hardware Components
 
-| Component | Function | Interface | Approx. Cost | Notes |
-|------------|-----------|------------|----------------|--------|
-| **Adafruit PCM5102 I²S DAC** | Digital-to-Analog Converter | I²S | ~$6 | 16–32 bit, 8–384 kHz sampling, 3.3V logic, 2.1 V-rms output |
-| **PCM1808 ADC** | Analog-to-Digital Converter | I²S | ~$6 | 24-bit, 8–96 kHz sampling, 3.3–5V supply |
-| **3362 1/4-inch Square Trimpot Potentiometers (x3)** | User control for low, mid, and high bands | Analog | Stockroom | Reads by MCU ADC pins |
-| **ICE40 UltraPLus FPGA Board** | Real-time DSP core | I²C, SPI | Stock | Performs all filtering |
-| **STM32L432KC MCU Board** | User interface and coefficient computation | SPI, ADC | Stock | Communicates with FPGA |
+| Component | Quantity | Function | Interface | Approx. Cost | Notes |
+|-----------|----------|----------|-----------|--------------|-------|
+| [**Adafruit PCM5102 I²S DAC**](https://www.digikey.com/en/products/detail/adafruit-industries-llc/6250/26249971) | 1 | Digital-to-Analog Converter | I²S | ~$6 | 16–32 bit, 8–384 kHz sampling, 3.3V logic, 2.1 V-rms output |
+| [**PCM1808 ADC**](https://www.amazon.com/PCM1808-Single-Ended-Analog-Input-Decoder-Amplifier/dp/B0D9LNGBD1/ref=sr_1_2?crid=36BETC5DF3MKP&dib=eyJ2IjoiMSJ9.nlR0qPjoFMWLXWvcVm5knddFFm91uZHicUMUQt7fQD2tq6s6qm5W_n4pyBM6xX-trNWgHX6ewn1atXHg6hRTejlrJI4auPOkpfjZueUFzJ0HZSB1_9DcHHzd51PVCwachjMeg7oem3HzbDuk_DUKRi_Ou52n5owbxklLTIAMG7AehH1ymr8ug4BEVaRgoWhk7Gr5YJGwMOrE1Mv-jY4hdG5l_VchhpsW65TVBDcg-eXAThgxDyTGwFhXx4VQ6AGPKSC5HkG-lvhaMzcYhnWzVMCcgTSM6joVPOTBo1RBNyI.Pa8c9lwcgTzKRZBqkcgd8nNLlCZvq8dwTe9jsdVm5MM&dib_tag=se&keywords=PCM1802&qid=1760390332&s=industrial&sprefix=%2Cindustrial%2C356&sr=1-2) | 1 | Analog-to-Digital Converter | I²S | ~$6 | 24-bit, 8–96 kHz sampling, 3.3–5V supply |
+| [**STX-3000 Audio Jack**](https://www.digikey.com/en/products/detail/kycon-inc/STX-3000/9975995) | 1 | Stereo audio input connector | Analog | ~$1 | 3.5 mm TRS jack, through-hole and breadboard compatible |
+| **3362 1/4-inch Square Trimpot Potentiometers** | 3 | User control for low, mid, and high bands | Analog | Stockroom | Reads by MCU ADC pins |
+| **ICE40 UltraPlus FPGA Board** | 1 | Real-time DSP core | I²C, SPI | On Hand | Performs all filtering |
+| **STM32L432KC MCU Board** | 1 | User interface and coefficient computation | SPI, ADC | On Hand | Communicates with FPGA |
+| **Miscellaneous Components** | n/a | Op-amps, resistors, capacitors, wires | Analog | Stockroom | Used for signal conditioning, biasing, and connections |
 
-Total external parts cost: **~$12** (excluding lab stock components).
+**Subtotal parts cost:** ~**$13** (excluding lab stock components).
+**Shipping and Taxes:** ~**$8**
+**Total external parts cost:** ~**$21**.
 
 ---
 
@@ -127,3 +131,19 @@ Overall, the design easily meets real-time performance needs: 48 kHz sample rate
 **LUT Usage**
 
 Because the filtering is duplicated, we duplicate the filtering hardware. Each channel has 3 cascading filters (low, mid, high), which consist of 5 biquads. That means that we do $3 x 5 = 30$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 1.875 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 48 KHz, this will be easy as the FGPA can run on order of MHz.
+
+### Project Timeline and Task Division
+
+The table below outlines the major project milestones, their target completion dates, and the team member responsible for leading each task. Tasks are ordered chronologically to ensure smooth integration of the hardware and firmware components leading up to a functional prototype.
+
+| Task | Goal Date | Lead Member |
+|------|------------|-------------|
+| Order parts (after project approval) | As soon as approved | Drake |
+| Successfully throughput unfiltered audio | 11/10 | Drake |
+| Successfully demo filtering in MATLAB | 11/10 | Eoin |
+| Successfully measure potentiometer input on MCU | 11/17 | Drake |
+| Finish RTL design and verification via test benches | 11/17 | Eoin |
+| Complete and test working prototype | 11/24 | Whole Team |
+
+**Task Division:**  
+Drake will primarily focus on the hardware integration side of the project, including part procurement, audio signal interfacing, and MCU testing. Eoin will lead the digital signal processing implementation, including MATLAB filter validation and FPGA RTL design with test benches. Both team members will collaborate closely in the final integration and prototype testing phase to ensure seamless hardware–software coordination and successful real-time operation.
