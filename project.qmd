@@ -63,9 +63,9 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 ### **Risks for project**
 - End-to-end latency (ADC → FPGA processing → DAC) or buffering delays cause audible lag, clicking, or make the system unusable for live monitoring.
 - Making the ADC, DAC, MCU and FPGA clocks not synchronized 
-- Lots of noise stemming from the usage of 16-bits
+- Increased quantization noise from using 16-bit data paths
 - High-frequency content aliasing into the audio band if the ADC sample rate or analog filter are insufficient.
-- Mess up wiring between components
+- Incorrect wiring between components
 - Output clipping at high volume damaging speakers or hearing.
 - Exceeding FPGA LUT's, and more importantly, **DSP slices**
 - - Our FPGA Contains only 8 16x16 DSP slices, requiring clever pipelining and multiplexing to filter all signals in time
@@ -115,15 +115,13 @@ $$
 With 32-bit I²S frames, the bit clock is approximately **3 MHz**, easily handled by the FPGA.
 
 **FPGA Throughput and Latency:**  
-With a 50 MHz fabric clock:  
+Assuming a 48 kHz sample rate (sample period ≈ 20.83 µs), a 50 MHz fabric clock gives
 
 $$
-\frac{50\,\text{MHz}}{48\,\text{kHz}} \approx 1000
-$$  
+\frac{50\ \text{MHz}}{48\ \text{kHz}} \approx 1042
+$$
 
-cycles per sample—ample for three IIR filters.  
-The ADC/DAC and pipeline add only a few samples of delay (<1 ms total).  
-Even with conservative buffering, end-to-end latency remains **≪ 50 ms**, meeting our real-time requirement.
+cycles per sample, which is more than sufficient for three IIR filters using time-multiplexed multiplies. If the ADC and DAC run from the same sample clock and we complete filtering within one sample period, the per-sample processing latency is about 20.8 µs ($\frac{1}{f_{ADC/DAC}}$). The ADC/DAC and any pipelining typically add only a few samples of delay (on the order of tens of microseconds). Even with conservative buffering, end-to-end latency remains **≪ 50 ms**, easily meeting our real-time requirement.
 
 **Resolution / Noise:**  
 24-bit audio provides ~146 dB theoretical SNR; internal 32-bit accumulation will preserve precision and avoid quantization noise.
@@ -132,7 +130,7 @@ Overall, the design easily meets real-time performance needs: 48 kHz sample rate
 
 **LUT Usage**
 
-Because the filtering is duplicated, we duplicate the filtering hardware. Each channel has 3 cascading filters (low, mid, high), which consist of 5 biquads. That means that we do $3 x 5 = 30$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 1.875 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 48 KHz, this will be easy as the FGPA can run on order of MHz.
+Because the filtering is duplicated, we duplicate the filtering hardware. The 3-band EQ consists of 3 cascading filters (low, mid, high), with each band using biquads. That means that we do $3 x 5 = 15$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 1.875 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 48 KHz, this will be easy as the FGPA can run on order of MHz.
 
 ### Project Timeline and Task Division
 
