@@ -18,10 +18,7 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 ### Functional Specifications
 
 - [ ] **Input / Output**:  
-  Audio is input via a 1/8-inch aux cable and output through a pair of speakers in the digital lab.
-
-- [ ] **Left & Right Channels**:  
-  Audio is correctly separated for left and right channels (if audio source plays stereo audio).
+  Audio is input via a 1/8-inch aux cable and output through a speaker in the digital lab.
 
 - [ ] **Bypass Behavior**:  
   When all EQ knobs are in their default (neutral) positions, the output should closely match the original input audio.
@@ -129,4 +126,4 @@ Overall, the design easily meets real-time performance needs: 48 kHz sample rate
 
 **LUT Usage**
 
-Because the filtering is duplicated, we duplicate the filtering hardware. Each channel has 3 cascading filters (low, mid, high), which consist of 5 biquads. That means that we do $3 x 5 x 2 = 30$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 3.75 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 96 KHz, this will be easy as the FGPA can run on order of MHz.
+Because the filtering is duplicated, we duplicate the filtering hardware. Each channel has 3 cascading filters (low, mid, high), which consist of 5 biquads. That means that we do $3 x 5 = 30$ multiplies per sample. These are 16 bit multiples, and the FPGA has 8 16x16 DSP slices. That means that as long as we run the FPGA at least 1.875 times the sampling frequency of the ADC/DAC then we can fit in all the multiplies. For a sampling rate of 48 KHz, this will be easy as the FGPA can run on order of MHz.
