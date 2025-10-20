@@ -35,6 +35,9 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 - [ ] **Latency:**  
   The system will maintain real-time operation with **< 50 ms latency**, ensuring audio remains synchronized with video sources such as YouTube.
 
+- [ ] **Filtering Performance:**  
+  Each EQ band must correctly boost or attenuate its designated frequency range without introducing distortion or unintended interaction between bands. The correctness of filtering behavior will be verified through both frequency response measurements and subjective listening (ear tests).
+
 - [ ] **Verification:**  
   The final report will include theoretical frequency responses for each band and confirm them via hardware measurements.
 
