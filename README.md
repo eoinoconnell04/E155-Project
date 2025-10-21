@@ -1,0 +1,31 @@
+# Real-Time Stereo 3-Band EQ
+
+**Authors:** Drake Gonzales & Eoin O'Connell
+
+## Overview
+This project implements a **real-time 3-band stereo equalizer** that can independently adjust low, mid, and high frequencies of an audio signal. Audio is input via a **1/8-inch auxiliary cable**, digitized by an **ADC**, processed on an **FPGA**, and output through a **DAC** to stereo speakers.
+
+Three potentiometers allow live control of each frequency band, enabling hands-on EQ adjustment with **minimal latency**.
+
+## Features
+- Three adjustable bands:
+  - Low: ~100–400 Hz
+  - Mid: ~400 Hz–2 kHz
+  - High: ~2–8 kHz
+- Real-time digital filtering on an **iCE40 UltraPlus FPGA**
+- **MCU-controlled** filter coefficients sent via SPI
+- Stereo input/output using I²S protocol
+- Bypass mode preserves original audio when knobs are neutral
+
+## Hardware
+- iCE40 UltraPlus FPGA
+- STM32L432KC MCU
+- PCM1808 ADC
+- PCM5102 DAC
+- 3 x potentiometers for EQ control
+- Standard 1/8-inch audio input
+
+## Usage
+1. Connect an audio source to the ADC.
+2. Adjust low, mid, and high potentiometers to modify EQ in real time.
+3. Audio output is sent to speakers via the DAC.
