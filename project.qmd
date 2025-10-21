@@ -1,7 +1,20 @@
 ---
 title: "Project: Real Time 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
+format: 
+  html:
+    theme: cosmo
+    toc: false
+    sidebar:
+      position: left
+      width: 200px
 ---
+
+::: {.sidebar}
+### Links
+- [Detailed Project Proposal](project_proposal.qmd)
+- [Interactive 3-Band EQ Simulator](bode_plot_demo.qmd)
+:::
 
 # Overview
 
@@ -31,9 +44,3 @@ Three potentiometers allow live control of each frequency band, enabling hands-o
 1. Connect an audio source to the ADC.
 2. Adjust low, mid, and high potentiometers to modify EQ in real time.
 3. Audio output is sent to speakers via the DAC.
-
-## More Information:
-
-[Project proposal](project_proposal.qmd)
-
-[Interactive 3-Band EQ Simulator](bode_plot_demo.qmd)
