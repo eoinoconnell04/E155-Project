@@ -11,7 +11,6 @@ Q = 0.707
 MAX_CUT_DB = 15.0
 
 def pot_to_gain_db(pot):
-    """Map 0-1 pot to -15 to 0 dB cut"""
     return -MAX_CUT_DB * (1 - pot)
 
 def db_to_amplitude(db):
@@ -72,7 +71,6 @@ def high_shelf_coeffs(pot):
 # 2. Frequency response
 # -------------------------------
 def freqz(b, a, worN=512):
-    """Simple freqz implementation"""
     w = np.logspace(np.log10(20), np.log10(FS/2), worN)
     z = np.exp(1j*2*np.pi*w/FS)
     h = (b[0] + b[1]/z + b[2]/z**2) / (1 + a[0]/z + a[1]/z**2)
@@ -91,7 +89,7 @@ def compute_total_response(low_pot, mid_pot, high_pot):
     return w, 20*np.log10(np.abs(H_total))
 
 # -------------------------------
-# 3. Plotly interactive plot
+# 3. Plotly + ipywidgets interactive plot
 # -------------------------------
 def interactive_eq_plot():
     low_slider = widgets.FloatSlider(value=1.0, min=0.0, max=1.0, step=0.01, description='Low')
@@ -100,7 +98,7 @@ def interactive_eq_plot():
 
     fig = go.FigureWidget()
     w, H = compute_total_response(low_slider.value, mid_slider.value, high_slider.value)
-    trace = fig.add_scatter(x=w, y=H, mode='lines', name='EQ Response')
+    fig.add_scatter(x=w, y=H, mode='lines', name='EQ Response')
     fig.update_layout(
         xaxis=dict(type='log', title='Frequency (Hz)'),
         yaxis=dict(title='Magnitude (dB)', range=[-18, 3]),
@@ -120,7 +118,7 @@ def interactive_eq_plot():
     display(widgets.VBox([fig, low_slider, mid_slider, high_slider]))
 
 # -------------------------------
-# 4. Run if standalone
+# 4. Run standalone
 # -------------------------------
 if __name__ == "__main__":
     interactive_eq_plot()
