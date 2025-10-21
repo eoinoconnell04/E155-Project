@@ -156,27 +156,3 @@ The table below outlines the major project milestones, their target completion d
 Drake will primarily focus on the hardware integration side of the project, including part procurement, audio signal interfacing, and MCU testing. Eoin will lead the digital signal processing implementation, including MATLAB filter validation and FPGA RTL design with test benches. Both team members will collaborate closely in the final integration and prototype testing phase to ensure seamless hardware–software coordination and successful real-time operation.
 
 As the project progresses, we will monitor our progress and reallocate tasks as needed to ensure balanced workloads and timely completion. Work will be tracked through a shared action-items spreadsheet. Additionally, we both aim to maintain a complete understanding of the entire system, ensuring that each of us can independently explain and reproduce every part of the project.
-
-```{python}
-#| label: fig-polar
-#| fig-cap: "A line plot on a polar axis"
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-r = np.arange(0, 2, 0.01)
-theta = 2 * np.pi * r
-fig, ax = plt.subplots(
-  subplot_kw = {'projection': 'polar'} 
-)
-ax.plot(theta, r)
-ax.set_rticks([0.5, 1, 1.5, 2])
-ax.grid(True)
-plt.show()
-```
-
-```{python}
-from interactive_eq_plot import interactive_eq_plot
-
-interactive_eq_plot()
-```
