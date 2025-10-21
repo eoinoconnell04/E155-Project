@@ -1,5 +1,6 @@
 ---
 title: "Project: Real Time Stereo 3-Band EQ Filtering"
+format: html
 author: "Drake Gonzales & Eoin O'Connell"
 execute:
   eval: true     # ensures code runs
@@ -161,3 +162,4 @@ As the project progresses, we will monitor our progress and reallocate tasks as 
 from interactive_eq_plot import interactive_eq_plot
 
 interactive_eq_plot()
+
