@@ -1,6 +1,10 @@
 ---
 title: "Project: Real Time Stereo 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
+execute:
+  eval: true     # ensures code runs
+  echo: false    # hides Python code in output (optional)
+jupyter: python3
 ---
 
 ## Project Proposal
