@@ -154,4 +154,6 @@ Drake will primarily focus on the hardware integration side of the project, incl
 As the project progresses, we will monitor our progress and reallocate tasks as needed to ensure balanced workloads and timely completion. Work will be tracked through a shared action-items spreadsheet. Additionally, we both aim to maintain a complete understanding of the entire system, ensuring that each of us can independently explain and reproduce every part of the project.
 
 ```{python}
-%run interactive_eq_plot.py
+from interactive_eq_plot import interactive_eq_plot
+
+interactive_eq_plot()
