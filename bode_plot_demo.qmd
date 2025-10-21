@@ -1,0 +1,111 @@
+---
+title: "Interactive 3-Band EQ Frequency Response Demo"
+format: html
+---
+
+<div>
+  <label>Low: <input type="range" id="lowSlider" min="0" max="1" step="0.01" value="1"></label>
+  <label>Mid: <input type="range" id="midSlider" min="0" max="1" step="0.01" value="1"></label>
+  <label>High: <input type="range" id="highSlider" min="0" max="1" step="0.01" value="1"></label>
+</div>
+
+<div id="eqPlot" style="width:100%;height:500px;"></div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.12.0/math.min.js"></script>
+<script>
+// Constants
+const FS = 48000;
+const Q = 0.707;
+const MAX_CUT_DB = 15;
+
+// Conversion helpers
+function potToGainDB(pot) { return -MAX_CUT_DB*(1-pot); }
+function dbToAmplitude(db) { return Math.pow(10, db/40); }
+
+// Low-shelf coefficients
+function lowShelfCoeffs(pot) {
+  const gainDB = potToGainDB(pot);
+  const A = dbToAmplitude(gainDB);
+  const w0 = 2*Math.PI*400/FS;
+  const alpha = Math.sin(w0)/(2*Q);
+  const cosw0 = Math.cos(w0);
+  const b0 = A*((A+1)-(A-1)*cosw0 + 2*Math.sqrt(A)*alpha);
+  const b1 = 2*A*((A-1)-(A+1)*cosw0);
+  const b2 = A*((A+1)-(A-1)*cosw0 - 2*Math.sqrt(A)*alpha);
+  const a0 = (A+1)+(A-1)*cosw0 + 2*Math.sqrt(A)*alpha;
+  const a1 = -2*((A-1)+(A+1)*cosw0);
+  const a2 = (A+1)+(A-1)*cosw0 - 2*Math.sqrt(A)*alpha;
+  return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
+}
+
+// Mid-peaking coefficients
+function midPeakingCoeffs(pot) {
+  const gainDB = potToGainDB(pot);
+  const A = dbToAmplitude(gainDB);
+  const w0 = 2*Math.PI*1000/FS;
+  const alpha = Math.sin(w0)/(2*Q);
+  const cosw0 = Math.cos(w0);
+  const b0 = 1+alpha*A;
+  const b1 = -2*cosw0;
+  const b2 = 1-alpha*A;
+  const a0 = 1+alpha/A;
+  const a1 = -2*cosw0;
+  const a2 = 1-alpha/A;
+  return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
+}
+
+// High-shelf coefficients
+function highShelfCoeffs(pot) {
+  const gainDB = potToGainDB(pot);
+  const A = dbToAmplitude(gainDB);
+  const w0 = 2*Math.PI*2000/FS;
+  const alpha = Math.sin(w0)/(2*Q);
+  const cosw0 = Math.cos(w0);
+  const b0 = A*((A+1)+(A-1)*cosw0 + 2*Math.sqrt(A)*alpha);
+  const b1 = -2*A*((A-1)+(A+1)*cosw0);
+  const b2 = A*((A+1)+(A-1)*cosw0 - 2*Math.sqrt(A)*alpha);
+  const a0 = (A+1)-(A-1)*cosw0 + 2*Math.sqrt(A)*alpha;
+  const a1 = 2*((A-1)-(A+1)*cosw0);
+  const a2 = (A+1)-(A-1)*cosw0 - 2*Math.sqrt(A)*alpha;
+  return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
+}
+
+// Frequency response using Math.js complex numbers
+function computeTotal(low, mid, high) {
+  const L = lowShelfCoeffs(low);
+  const M = midPeakingCoeffs(mid);
+  const H = highShelfCoeffs(high);
+  const n = 512;
+  const w = Array.from({length:n}, (_,i)=> 20*Math.pow(FS/2/20,i/(n-1)));
+  const h = w.map(f=>{
+    const z = math.exp(math.complex(0, 2*Math.PI*f/FS));
+    function hz(b,a){
+      const num = math.add(math.add(b[0], math.divide(b[1], z)), math.divide(b[2], math.pow(z,2)));
+      const den = math.add(math.add(1, math.divide(a[0], z)), math.divide(a[1], math.pow(z,2)));
+      return math.abs(math.divide(num,den));
+    }
+    return 20*Math.log10(hz(L.b,L.a) * hz(M.b,M.a) * hz(H.b,H.a));
+  });
+  return [w,h];
+}
+
+// Initial plot
+let low=1, mid=1, high=1;
+let [x,y] = computeTotal(low,mid,high);
+Plotly.newPlot('eqPlot', [{x:x, y:y, type:'scatter', mode:'lines'}], {
+  xaxis:{type:'log', title:'Frequency (Hz)'},
+  yaxis:{title:'Magnitude (dB)', range:[-18,3]},
+  title:'Interactive 3-Band EQ'
+});
+
+// Slider updates
+document.getElementById('lowSlider').addEventListener('input', e=>{low=parseFloat(e.target.value); updatePlot();});
+document.getElementById('midSlider').addEventListener('input', e=>{mid=parseFloat(e.target.value); updatePlot();});
+document.getElementById('highSlider').addEventListener('input', e=>{high=parseFloat(e.target.value); updatePlot();});
+
+function updatePlot(){
+  let [x,y] = computeTotal(low,mid,high);
+  Plotly.update('eqPlot',{x:[x],y:[y]});
+}
+</script>
