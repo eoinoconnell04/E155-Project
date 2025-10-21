@@ -3,18 +3,18 @@ title: "Project: Real Time 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
 format: 
   html:
-    theme: cosmo
-    toc: false
-    sidebar:
-      position: left
-      width: 200px
+    theme: cosmo   # optional, can be any theme
 ---
 
-::: {.sidebar}
-### Links
-- [Detailed Project Proposal](project_proposal.qmd)
-- [Interactive 3-Band EQ Simulator](bode_plot_demo.qmd)
-:::
+<div style="position:fixed; left:0; top:0; width:200px; height:100%; background:#f8f9fa; padding:1em;">
+  <h4>Links</h4>
+  <ul>
+    <li><a href="project_proposal.qmd">Project Proposal</a></li>
+    <li><a href="bode_plot_demo.qmd">Interactive 3-Band EQ Simulator</a></li>
+  </ul>
+</div>
+
+<div style="margin-left:220px; padding:1em;">
 
 # Overview
 
