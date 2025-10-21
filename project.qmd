@@ -1,10 +1,9 @@
 ---
 title: "Project: Real Time Stereo 3-Band EQ Filtering"
-format: html
 author: "Drake Gonzales & Eoin O'Connell"
-execute:
-  eval: true     # ensures code runs
-  echo: false    # hides Python code in output (optional)
+format:
+  html:
+    code-fold: true
 jupyter: python3
 ---
 
@@ -158,154 +157,26 @@ Drake will primarily focus on the hardware integration side of the project, incl
 
 As the project progresses, we will monitor our progress and reallocate tasks as needed to ensure balanced workloads and timely completion. Work will be tracked through a shared action-items spreadsheet. Additionally, we both aim to maintain a complete understanding of the entire system, ensuring that each of us can independently explain and reproduce every part of the project.
 
-```{html}
-<div id="eq_plot" style="width:100%;height:500px;"></div>
+```{python}
+#| label: fig-polar
+#| fig-cap: "A line plot on a polar axis"
 
-<!-- Include Plotly.js from CDN -->
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-(function() {
-    const fs = 48000;  // Sample rate
-    const Q = 0.707;
-    const maxCutDB = 15;
+import numpy as np
+import matplotlib.pyplot as plt
 
-    // Convert slider 0-1 to gain in dB
-    function potToGainDB(pot) {
-        return -maxCutDB * (1 - pot);
-    }
+r = np.arange(0, 2, 0.01)
+theta = 2 * np.pi * r
+fig, ax = plt.subplots(
+  subplot_kw = {'projection': 'polar'} 
+)
+ax.plot(theta, r)
+ax.set_rticks([0.5, 1, 1.5, 2])
+ax.grid(True)
+plt.show()
+```
 
-    function dbToAmp(db) {
-        return Math.pow(10, db / 40);
-    }
+```{python}
+from interactive_eq_plot import interactive_eq_plot
 
-    // Biquad coefficient functions
-    function lowShelfCoeffs(pot) {
-        const A = dbToAmp(potToGainDB(pot));
-        const w0 = 2*Math.PI*400/fs;
-        const alpha = Math.sin(w0)/(2*Q);
-        const cosw0 = Math.cos(w0);
-
-        let b0 = A*((A+1)-(A-1)*cosw0 + 2*Math.sqrt(A)*alpha);
-        let b1 = 2*A*((A-1)-(A+1)*cosw0);
-        let b2 = A*((A+1)-(A-1)*cosw0 - 2*Math.sqrt(A)*alpha);
-        let a0 = (A+1)+(A-1)*cosw0 + 2*Math.sqrt(A)*alpha;
-        let a1 = -2*((A-1)+(A+1)*cosw0);
-        let a2 = (A+1)+(A-1)*cosw0 - 2*Math.sqrt(A)*alpha;
-
-        return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
-    }
-
-    function midPeakingCoeffs(pot) {
-        const A = dbToAmp(potToGainDB(pot));
-        const w0 = 2*Math.PI*1000/fs;
-        const alpha = Math.sin(w0)/(2*Q);
-        const cosw0 = Math.cos(w0);
-
-        let b0 = 1 + alpha*A;
-        let b1 = -2*cosw0;
-        let b2 = 1 - alpha*A;
-        let a0 = 1 + alpha/A;
-        let a1 = -2*cosw0;
-        let a2 = 1 - alpha/A;
-
-        return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
-    }
-
-    function highShelfCoeffs(pot) {
-        const A = dbToAmp(potToGainDB(pot));
-        const w0 = 2*Math.PI*2000/fs;
-        const alpha = Math.sin(w0)/(2*Q);
-        const cosw0 = Math.cos(w0);
-
-        let b0 = A*((A+1)+(A-1)*cosw0 + 2*Math.sqrt(A)*alpha);
-        let b1 = -2*A*((A-1)+(A+1)*cosw0);
-        let b2 = A*((A+1)+(A-1)*cosw0 - 2*Math.sqrt(A)*alpha);
-        let a0 = (A+1)-(A-1)*cosw0 + 2*Math.sqrt(A)*alpha;
-        let a1 = 2*((A-1)-(A+1)*cosw0);
-        let a2 = (A+1)-(A-1)*cosw0 - 2*Math.sqrt(A)*alpha;
-
-        return {b:[b0/a0,b1/a0,b2/a0], a:[a1/a0,a2/a0]};
-    }
-
-    // Simple freqz function
-    function freqz(b, a, N=512) {
-        const w = [];
-        const h = [];
-        const fmin = 20;
-        const fmax = fs/2;
-        for(let i=0;i<N;i++){
-            const f = fmin*Math.pow(fmax/fmin,i/(N-1));
-            const z = math.complex({re: Math.cos(2*Math.PI*f/fs), im: Math.sin(2*Math.PI*f/fs)});
-            const numerator = math.add(math.add(b[0], math.divide(b[1], z)), math.divide(b[2], math.pow(z,2)));
-            const denominator = math.add(math.add(1, math.divide(a[0], z)), math.divide(a[1], math.pow(z,2)));
-            const H = math.divide(numerator, denominator);
-            w.push(f);
-            h.push(math.abs(H));
-        }
-        return {w,h};
-    }
-
-    // Compute total response
-    function computeResponse(low, mid, high) {
-        const bl = lowShelfCoeffs(low).b;
-        const al = lowShelfCoeffs(low).a;
-        const bm = midPeakingCoeffs(mid).b;
-        const am = midPeakingCoeffs(mid).a;
-        const bh = highShelfCoeffs(high).b;
-        const ah = highShelfCoeffs(high).a;
-
-        const N = 512;
-        const w = [];
-        const Htotal = [];
-        const fmin = 20;
-        const fmax = fs/2;
-        for(let i=0;i<N;i++){
-            const f = fmin*Math.pow(fmax/fmin,i/(N-1));
-            w.push(f);
-            // Simple magnitude calculation
-            // For simplicity, just multiply frequency responses approx (could refine later)
-            const h = 1; // placeholder for actual magnitude
-            Htotal.push(h);
-        }
-        return {w,Htotal};
-    }
-
-    // Initial plot
-    const trace = {
-        x: [], y: [], type:'scatter', mode:'lines', name:'EQ Response'
-    };
-    const layout = {xaxis:{type:'log', title:'Frequency (Hz)'}, yaxis:{title:'Magnitude (dB)', range:[-18,3]}, title:'Interactive 3-Band EQ'};
-    Plotly.newPlot('eq_plot',[trace], layout);
-
-    // Add sliders
-    const lowSlider = document.createElement('input');
-    lowSlider.type='range'; lowSlider.min=0; lowSlider.max=1; lowSlider.step=0.01; lowSlider.value=1;
-    const midSlider = lowSlider.cloneNode(); midSlider.value=1;
-    const highSlider = lowSlider.cloneNode(); highSlider.value=1;
-
-    const container = document.getElementById('eq_plot');
-    container.appendChild(document.createElement('br')); container.appendChild(document.createTextNode('Low:')); container.appendChild(lowSlider);
-    container.appendChild(document.createElement('br')); container.appendChild(document.createTextNode('Mid:')); container.appendChild(midSlider);
-    container.appendChild(document.createElement('br')); container.appendChild(document.createTextNode('High:')); container.appendChild(highSlider);
-
-    function updatePlot() {
-        // TODO: Replace with proper magnitude computation
-        const x = [];
-        const y = [];
-        const N = 512;
-        const fmin = 20;
-        const fmax = fs/2;
-        for(let i=0;i<N;i++){
-            x.push(fmin*Math.pow(fmax/fmin,i/(N-1)));
-            // Placeholder: simple shape for demo
-            y.push(-15*(1-lowSlider.value)*(x[i]<400 ? 1:0) -15*(1-midSlider.value)*(x[i]>=400 && x[i]<=2000 ? 1:0) -15*(1-highSlider.value)*(x[i]>2000 ? 1:0));
-        }
-        Plotly.react('eq_plot',[{x:x,y:y,mode:'lines',name:'EQ Response'}], layout);
-    }
-
-    lowSlider.addEventListener('input',updatePlot);
-    midSlider.addEventListener('input',updatePlot);
-    highSlider.addEventListener('input',updatePlot);
-    updatePlot();
-})();
-</script>
+interactive_eq_plot()
+```
