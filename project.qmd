@@ -6,7 +6,7 @@ format:
     theme: cosmo   # optional, can be any theme
 ---
 
-<div style="position:fixed; left:0; top:0; width:200px; height:100%; background:#f8f9fa; padding:3em;">
+<div style="position:fixed; left:0; top:0; width:200px; height:100%; background:#f8f9fa; padding:1em; padding-top:3em;">
   <h4>Links</h4>
   <ul>
     <li><a href="project_proposal.qmd">Project Proposal</a></li>
