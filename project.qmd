@@ -3,7 +3,7 @@ title: "Project: Real Time 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
 format: 
   html:
-    theme: cosmo   # optional, can be any theme
+    theme: cosmo  
 ---
 
 <div style="position:fixed; left:0; top:0; width:250px; height:100%; background:#f8f9fa; padding:1em; padding-top:3em;">
@@ -11,6 +11,7 @@ format:
   <ul>
     <li><a href="project_proposal.qmd">Project Proposal</a></li>
     <li><a href="bode_plot_demo.qmd">Interactive 3-Band EQ Simulator</a></li>
+    <li><a href="IIR_filter.qmd">IIR Filter Math and Calculations</a></li>
   </ul>
 </div>
 

@@ -1,10 +1,6 @@
 ---
 title: "Project Proposal: Real Time 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
-format:
-  html:
-    code-fold: true
-jupyter: python3
 ---
 
 ## Project Proposal
@@ -101,7 +97,7 @@ The design is going to be developed and implemented on an STM32L432KC Microcontr
 
 ### Block Diagram
 
-![](flow_chart.png)
+![](images/flow_chart.png)
 <figcaption> Figure 1: Flow Chart of Partitioning and Connections.</figcaption>
 
 ### Performance Calculations
