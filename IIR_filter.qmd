@@ -47,7 +47,7 @@ Our 3-band EQ uses three common second-order filter types. Each type has its own
 
 ### Low Shelf Filter
 
-A low shelf boosts or attenuates frequencies below a certain cutoff frequency \(f_c\). The coefficients are calculated from the desired cutoff, gain, and sampling rate:
+A low shelf boosts or attenuates frequencies below a certain cutoff frequency ($f_c$). The coefficients are calculated from the desired cutoff, gain, and sampling rate:
 
 $$
 \begin{aligned}
@@ -60,7 +60,7 @@ $$
 
 ### High Shelf Filter
 
-A high shelf affects frequencies above a certain cutoff \(f_c\), either boosting or cutting them. The coefficient calculation is similar to the low shelf but reflects the change in frequency range:
+A high shelf affects frequencies above a certain cutoff ($f_c$), either boosting or cutting them. The coefficient calculation is similar to the low shelf but reflects the change in frequency range:
 
 $$
 \begin{aligned}
@@ -73,7 +73,7 @@ $$
 
 ### Peaking (Mid Cut / Boost) Filter
 
-A peaking filter boosts or cuts a band of frequencies around a center frequency \(f_c\), defined by a Q-factor that sets the bandwidth:
+A peaking filter boosts or cuts a band of frequencies around a center frequency ($f_c$), defined by a Q-factor that sets the bandwidth:
 
 $$
 \begin{aligned}
@@ -84,7 +84,7 @@ b_0, b_1, b_2, a_0, a_1, a_2 &= \text{functions of } \omega, \alpha, A
 \end{aligned}
 $$
 
-Each of these formulas is then normalized by \(a_0\) to produce the final biquad coefficients \(b_0, b_1, b_2, a_1, a_2\) used in the FPGA implementation. The potentiometer for each band maps directly to the filter parameters (cutoff, gain, or Q), allowing real-time control.
+Each of these formulas is then normalized by ($a_0$) to produce the final biquad coefficients ($b_0, b_1, b_2, a_1, a_2$) used in the FPGA implementation. The potentiometer for each band maps directly to the filter parameters (cutoff, gain, or Q), allowing real-time control.
 
 ## Stability Considerations
 
@@ -98,6 +98,6 @@ A filter becomes unstable if the poles of its transfer function lie outside the 
 To ensure stable operation in our FPGA implementation, we:
 1. Limit the maximum gain and Q values based on typical audio ranges.  
 2. Use Direct Form II to minimize memory usage but carefully handle scaling to avoid overflow.  
-3. Normalize all coefficients by \(a_0\) and use sufficient fixed-point precision for the coefficient representation.  
+3. Normalize all coefficients by ($a_0$) and use sufficient fixed-point precision for the coefficient representation.  
 
 By following these precautions, each band of the EQ remains stable across the full range of potentiometer settings, ensuring smooth and reliable real-time audio filtering.
