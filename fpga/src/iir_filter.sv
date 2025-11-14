@@ -1,0 +1,50 @@
+/*
+Author: Eoin O'Connell
+Email: eoconnell@hmc.edu
+Date: Nov. 13, 2025
+Module Function: This is a module that implements a single biquad IIR filter. This will be instantiated 3 times in the final design to support low mid and high independent filtering.
+*/
+module iir_filter(
+    input  logic        clk,
+    input  logic        reset,
+    input  logic [15:0] latest_sample,   // x[n]
+    input  logic [15:0] b0, b1, b2, a1, a2,
+    output logic [15:0] filtered_output  // y[n]
+);
+    // Store previous input samples (x[n-1], x[n-2])
+    logic signed [15:0] x1, x2;
+
+    // Store previous output samples (y[n-1], y[n-2])
+    logic signed [31:0] y1, y2; // wider to prevent overflow
+
+    // Intermediate result (use wider width for accumulation)
+    logic signed [31:0] acc;
+
+    // Compute filter output
+    always_ff @(posedge clk or posedge reset) begin
+        if (reset) begin
+            x1 <= 16'd0;
+            x2 <= 16'd0;
+            y1 <= 32'd0;
+            y2 <= 32'd0;
+            filtered_output <= 16'd0;
+        end else begin
+            // Perform the biquad calculation
+            acc = (b0 * latest_sample)
+                + (b1 * x1)
+                + (b2 * x2)
+                - (a1 * y1[31:16])   // truncate back to 16-bit when feeding back
+                - (a2 * y2[31:16]);
+
+            // Update output
+            filtered_output <= acc[31:16]; // take high 16 bits as output
+
+            // Shift for next sample
+            x2 <= x1;
+            x1 <= latest_sample;
+            y2 <= y1;
+            y1 <= acc;
+        end
+    end
+
+endmodule
