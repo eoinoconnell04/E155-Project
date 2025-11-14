@@ -2,11 +2,9 @@
 Author: Eoin O'Connell
 Email: eoconnell@hmc.edu
 Date: Nov. 13, 2025
-Module Function: Time-multiplexed biquad IIR filter using explicit SB_MAC16
+Module Function: Time-multiplexed biquad IIR filter using explicit MAC16
               Guarantees 1 DSP slice usage per instance
 */
-
-// `include "iCE40UP5K.v"
 
 module iir_filter_DSP_slice(
     input  logic        clk,
@@ -45,8 +43,8 @@ module iir_filter_DSP_slice(
     logic        dsp_oholdtop, dsp_oholdbot;
     logic        dsp_oloadtop, dsp_oloadbot;
     
-    // Instantiate SB_MAC16 for guaranteed DSP usage
-    SB_MAC16 #(
+    // Instantiate MAC16 for guaranteed DSP usage (corrected for Lattice iCE40)
+    MAC16 #(
         .NEG_TRIGGER(1'b0),           // Positive edge
         .C_REG(1'b0),                 // No register on C input
         .A_REG(1'b0),                 // No register on A input  
