@@ -6,7 +6,7 @@ Module Function: Time-multiplexed biquad IIR filter using explicit SB_MAC16
               Guarantees 1 DSP slice usage per instance
 */
 
-`include "iCE40UP5K.v"
+// `include "iCE40UP5K.v"
 
 module iir_filter_DSP_slice(
     input  logic        clk,
