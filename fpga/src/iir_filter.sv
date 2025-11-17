@@ -34,7 +34,7 @@ module iir_filter(
                 + (b1 * x1)
                 + (b2 * x2)
                 -a1 * $signed(y1[31:16])
-                -a2 * $signed(y2[31:16])
+                -a2 * $signed(y2[31:16]);
 
             // Update output
             filtered_output <= acc[31:16]; // take high 16 bits as output
