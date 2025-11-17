@@ -31,11 +31,12 @@ module iir_filter(
             filtered_output <= 16'sd0;
         end else begin
             // Perform the biquad calculation with signed math
-            acc = (b0 * latest_sample)
-                + (b1 * x1)
-                + (b2 * x2)
-                - (a1 * $signed(y1[31:16]))
-                - (a2 * $signed(y2[31:16]));
+            acc = ($signed(b0) * $signed(latest_sample))
+                + ($signed(b1) * $signed(x1))
+                + ($signed(b2) * $signed(x2))
+                - ($signed(a1) * $signed(y1[31:16]))
+                - ($signed(a2) * $signed(y2[31:16]));
+
 
             // Update output
             filtered_output <= acc[31:16]; // take high 16 bits as output
