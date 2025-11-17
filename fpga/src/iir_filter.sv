@@ -33,8 +33,8 @@ module iir_filter(
             acc = (b0 * latest_sample)
                 + (b1 * x1)
                 + (b2 * x2)
-                - (a1 * y1[31:16])   // truncate back to 16-bit when feeding back
-                - (a2 * y2[31:16]);
+                -a1 * $signed(y1[31:16])
+                -a2 * $signed(y2[31:16])
 
             // Update output
             filtered_output <= acc[31:16]; // take high 16 bits as output
