@@ -38,12 +38,12 @@ module iir_filter_tb;
         clk = 0;
         reset = 1;
 
-        // Random but stable filter coefficients (test values)
-        b0 = 16'd1200;
-        b1 = -16'd800;
-        b2 = 16'd400;
-        a1 = -16'd300;
-        a2 = 16'd150;
+        // Low-pass example
+        b0 = 16'sd1638; // 0.05 in Q15
+        b1 = 16'sd3276; // 0.10
+        b2 = 16'sd1638; // 0.05
+        a1 = -16'sd29491; // -0.9 in Q15
+        a2 = 16'sd8192;   // 0.25 in Q15
 
         // Hold reset for a few cycles
         repeat (4) @(posedge clk);
