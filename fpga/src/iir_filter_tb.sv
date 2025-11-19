@@ -30,7 +30,7 @@ module iir_filter_tb;
 
     // Expected output
     int signed acc;
-    logic [15:0] expected_out;
+    logic signed [15:0] expected_out;
 
     initial begin
         $display("Starting biquad IIR filter testbench...");
