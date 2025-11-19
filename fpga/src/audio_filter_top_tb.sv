@@ -94,9 +94,13 @@ module audio_filter_top_tb;
         // Test 11: Sine-like pattern
         $display("\n=== Sine-like Pattern Test ===");
         for (int i = 0; i < 32; i++) begin
-            real angle = (i * 3.14159 * 2.0) / 32.0;
-            real sine_val = $sin(angle);
-            logic signed [23:0] sample = $rtoi(sine_val * 8000000);
+            real angle;
+            real sine_val;
+            logic signed [23:0] sample;
+            
+            angle = (i * 3.14159 * 2.0) / 32.0;
+            sine_val = $sin(angle);
+            sample = $rtoi(sine_val * 8000000);
             test_sample(sample, "Sine");
         end
         
