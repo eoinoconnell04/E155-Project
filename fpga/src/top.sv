@@ -51,8 +51,8 @@ assign s_proc = s_adc >>> 3;          // arithmetic divide by two
 
 //assign dac_data = {8'd0, s_proc};     // repack for the 32-bit I2S interface
 	
-audio_filter_top_24bit filter(lmmi_clk_i, ~reset_n_i, s_proc, dac_data); 
-//audio_filter_top filter(lmmi_clk_i, ~reset_n_i, s_proc, dac_data); 
+//audio_filter_top_24bit filter(lmmi_clk_i, ~reset_n_i, s_proc, dac_data); 
+audio_filter_top filter(lmmi_clk_i, ~reset_n_i, s_proc, dac_data); 
 //assign dac_data = $signed(latch_data) >>> 1;
 //assign dac_data = latch_data; 
 assign adc_test = adc_valid;

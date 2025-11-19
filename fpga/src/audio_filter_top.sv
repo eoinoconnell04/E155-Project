@@ -11,15 +11,10 @@ module audio_filter_top(
     input  logic signed [23:0] adc_data,    // 24-bit signed audio input
     output logic [31:0] dac_data            // DAC data (24-bit audio + 8-bit padding)
 );
-    // ===== Temporary register for input =====
-    logic signed [23:0] temp;
-    always_ff @(posedge clk) begin
-        temp <= adc_data;
-    end
 
     // ===== Convert 24-bit input to 16-bit (top 16 bits) =====
     logic signed [15:0] audio_in;
-    assign audio_in = temp[23:8];
+    assign audio_in = adc_data[23:8];
 
     // ===== Filtered audio output (16-bit) =====
     logic signed [15:0] audio_out;
@@ -43,11 +38,11 @@ module audio_filter_top(
 
     // ===== Active filter coefficients (example) =====
     /*
-    assign b0 = 16'sd15871;   // 0.9676 * 16384 ≈ 15871
-    assign b1 = -16'sd30917;  // -1.8868 * 16384 ≈ -30917
-    assign b2 = 16'sd15106;   // 0.9221 * 16384 ≈ 15106
-    assign a1 = -16'sd30906;  // -1.8861 * 16384 ≈ -30906
-    assign a2 = 16'sd14618;   // 0.8922 * 16384 ≈ 14618
+    assign b0 = 16'sd15871;   // 0.9676 * 16384 â‰ˆ 15871
+    assign b1 = -16'sd30917;  // -1.8868 * 16384 â‰ˆ -30917
+    assign b2 = 16'sd15106;   // 0.9221 * 16384 â‰ˆ 15106
+    assign a1 = -16'sd30906;  // -1.8861 * 16384 â‰ˆ -30906
+    assign a2 = 16'sd14618;   // 0.8922 * 16384 â‰ˆ 14618
     */
 
     // ===== Instantiate 16-bit IIR filter =====

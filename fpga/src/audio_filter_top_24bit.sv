@@ -10,15 +10,10 @@ module audio_filter_top_24bit(
     input  logic signed [23:0] adc_data,    // 24-bit signed audio input
     output logic [31:0] dac_data            // DAC data (24-bit audio + 8-bit padding)
 );
-    logic signed [23:0] temp;
-    
-    always_ff @(posedge clk) begin
-        temp <= adc_data;
-    end 
-    
+
     // Use full 24-bit signed audio sample
     logic signed [23:0] audio_in;
-    assign audio_in = temp;
+    assign audio_in = adc_data;
     
     // Filtered audio output (24-bit)
     logic signed [23:0] audio_out;
