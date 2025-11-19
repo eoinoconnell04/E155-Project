@@ -1,0 +1,25 @@
+---
+title: "Midpoint Checkoff: Real Time 3-Band EQ Filtering"
+author: "Drake Gonzales & Eoin O'Connell"
+date: "Nov. 19, 2025"
+---
+
+## Overview
+
+As of today, we are on track for our final deliverables. Yesterday, we played unfiltered audio from a computer through a TX signal chain, ADC, FPGA, DAC and finally to the lab speakers. This was a big accomplishment as we spent multiple days debugging why our ADC and DAC were not functioning as intended.
+
+Filtering update
+
+All parts have been ordered (ADC, DAC, audio jacks), as all other parts (opamps, resistors, trim pots, etc.) are all from the stockroom.
+
+## Technical Diagrams
+
+### Schematics
+
+### Block Diagrams
+
+## Microcontroller Routines
+
+
+
+
