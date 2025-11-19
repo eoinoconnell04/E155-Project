@@ -12,7 +12,7 @@ format:
     <li><a href="project_proposal.qmd">Project Proposal</a></li>
     <li><a href="bode_plot_demo.qmd">Interactive 3-Band EQ Simulator</a></li>
     <li><a href="IIR_filter.qmd">IIR Filter Math and Calculations</a></li>
-    <li><a href="midpoint_checkoff.qmd">IIR Filter Math and Calculations</a></li>
+    <li><a href="midpoint_checkoff.qmd">Midpoint Checkoff</a></li>
   </ul>
 </div>
 
