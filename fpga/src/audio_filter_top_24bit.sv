@@ -41,13 +41,33 @@ module audio_filter_top_24bit(
     // a = [1.0000, -1.8861, 0.8922]
     // Note: a0 is always 1.0 and not used in the biquad implementation
     /*
-    assign b0 = 16'sd15871;   // 0.9676 * 16384 ≈ 15871
-    assign b1 = -16'sd30917;  // -1.8868 * 16384 ≈ -30917
-    assign b2 = 16'sd15106;   // 0.9221 * 16384 ≈ 15106
-    assign a1 = -16'sd30906;  // -1.8861 * 16384 ≈ -30906
-    assign a2 = 16'sd14618;   // 0.8922 * 16384 ≈ 14618
+    assign b0 = 16'sd15871;   // 0.9676 * 16384 â‰ˆ 15871
+    assign b1 = -16'sd30917;  // -1.8868 * 16384 â‰ˆ -30917
+    assign b2 = 16'sd15106;   // 0.9221 * 16384 â‰ˆ 15106
+    assign a1 = -16'sd30906;  // -1.8861 * 16384 â‰ˆ -30906
+    assign a2 = 16'sd14618;   // 0.8922 * 16384 â‰ˆ 14618
     */
     
+	// ===== SIMPLE UNITY GAIN TEST SECTION =====
+    // Uncomment this section to test basic Q2.14 multiplication
+    /*
+    logic signed [39:0] unity_mult;
+    logic signed [23:0] unity_result;
+    
+    // Multiply by 1.0 in Q2.14 format (16384 = 0x4000 = 1.0)
+    assign unity_mult = 16'sd16384 * audio_in;
+    
+    // Shift right by 14 bits to account for Q2.14 format
+    // 24-bit input × 16-bit coeff = 40-bit result
+    // We want bits [37:14] to get back to 24-bit output
+    assign unity_result = unity_mult[37:14];
+    
+    assign audio_out = unity_result;
+	*/
+    
+    // ===== END SIMPLE UNITY GAIN TEST SECTION =====
+
+	
     // Instantiate 24-bit IIR filter
     iir_filter_24bit filter_inst (
         .clk(clk),
@@ -60,4 +80,5 @@ module audio_filter_top_24bit(
         .a2(a2),
         .filtered_output(audio_out)
     );
+	
 endmodule
