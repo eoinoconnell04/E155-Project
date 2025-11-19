@@ -128,7 +128,8 @@ module audio_filter_top_tb;
         // Apply input
         adc_data = input_val;
         
-        // Wait for one clock cycle
+        // Wait for two clock cycles (account for pipeline delay)
+        @(posedge clk);
         @(posedge clk);
         
         // Extract actual 24-bit output from DAC data (bottom 24 bits)
