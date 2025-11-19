@@ -3,7 +3,7 @@ module lscc_i2s_codec #
 // Module Parameters
 // -----------------------------------------------------------------------------
   (
-    parameter DATA_WIDTH  = 16,
+    parameter DATA_WIDTH  = 24,
     parameter TRANSCEIVER_MODE = 1
   )
 // -----------------------------------------------------------------------------
