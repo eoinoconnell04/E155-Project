@@ -12,10 +12,14 @@ module audio_filter_top(
     input  logic [31:0] adc_data,    // ADC data (use top 16 bits as signed audio)
     output logic [31:0] dac_data     // DAC data (top 16 bits = filtered audio, bottom 16 = 0)
 );
-
+	logic [31:0] temp;
+	always_ff @(posedge clk) begin
+		temp <= adc_data;
+	end 
+	
     // Extract top 16 bits from ADC as signed audio sample
     logic signed [15:0] audio_in;
-    assign audio_in = $signed(adc_data[31:16]);
+    assign audio_in = $signed(temp[31:16]);
     
     // Filtered audio output
     logic signed [15:0] audio_out;
@@ -30,18 +34,22 @@ module audio_filter_top(
     // b = [0.9676, -1.8868, 0.9221]
     // a = [1.0000, -1.8861, 0.8922]
     // Note: a0 is always 1.0 and not used in the biquad implementation
-    assign b0 = 16'sd15871;   // 0.9676 * 16384 ≈ 15871
-    assign b1 = -16'sd30917;  // -1.8868 * 16384 ≈ -30917
-    assign b2 = 16'sd15106;   // 0.9221 * 16384 ≈ 15106
-    assign a1 = -16'sd30906;  // -1.8861 * 16384 ≈ -30906
-    assign a2 = 16'sd14618;   // 0.8922 * 16384 ≈ 14618
+	
+    assign b0 = 16'sd15871;   // 0.9676 * 16384 â‰ˆ 15871
+    assign b1 = -16'sd30917;  // -1.8868 * 16384 â‰ˆ -30917
+    assign b2 = 16'sd15106;   // 0.9221 * 16384 â‰ˆ 15106
+    assign a1 = -16'sd30906;  // -1.8861 * 16384 â‰ˆ -30906
+    assign a2 = 16'sd14618;   // 0.8922 * 16384 â‰ˆ 14618
+	
     
     // Unity gain passthrough for testing (uncomment to use)
-    // assign b0 = 16'sd16384;   // 1.0
-    // assign b1 = 16'sd0;       // 0.0
-    // assign b2 = 16'sd0;       // 0.0
-    // assign a1 = 16'sd0;       // 0.0
-    // assign a2 = 16'sd0;       // 0.0
+	/*
+    assign b0 = 16'sd16384;   // 1.0
+    assign b1 = 16'sd0;       // 0.0
+    assign b2 = 16'sd0;       // 0.0
+    assign a1 = 16'sd0;       // 0.0
+    assign a2 = 16'sd0;       // 0.0
+	*/
     
     // Instantiate IIR filter
     iir_filter filter_inst (
