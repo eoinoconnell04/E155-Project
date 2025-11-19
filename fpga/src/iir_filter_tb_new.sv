@@ -219,9 +219,11 @@ module iir_filter_tb_new();
     end
     
     // Optional: Dump waveforms
+    /*
     initial begin
         $dumpfile("iir_filter_tb.vcd");
         $dumpvars(0, iir_filter_tb);
     end
+    */
 
 endmodule
