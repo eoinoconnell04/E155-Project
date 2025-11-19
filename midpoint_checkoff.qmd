@@ -3,10 +3,13 @@ title: "Midpoint Checkoff: Real Time 3-Band EQ Filtering"
 author: "Drake Gonzales & Eoin O'Connell"
 date: "Nov. 19, 2025"
 ---
-
 ## Overview
 
-As of today, we are on track for our final deliverables. Yesterday, we played unfiltered audio from a computer through a TX signal chain, ADC, FPGA, DAC and finally to the lab speakers. This was a big accomplishment as we spent multiple days debugging why our ADC and DAC were not functioning as intended.
+As of today, we are on track for our final deliverables for this lab. That being said, as of right now we can play full unfiltered audio from a computer to a 3.5mm jack, an ADC, an FPGA, a DAC, and another 3.5mm jack to a set of two stereo speakers. 
+
+Inital struggles for this design was first fully integrating a top module to already pre-written Lattice I2S code. The Lattice code is open-source and was written to be able to recieve and transmit data over I2S protocol. The struggle with this however was to learn how to latch the input data from the ADC to the correct posedge/negedge to the bitclk and LRclk. Without proper synchronization this data can become metastable and never really latch internally, which is what we originally had. The latch was originaly written in combinational logic with a basic dac_data is assigned to adc_data. However this failed due to the non-sychrnoization based on what our clocks were running at, and the output from this yielded garbage analog data. Once written correctly (that is, now it is synched to a clk), audio was able to cross from the ADC -> FPGA -> DAC with no problem. 
+
+Secondly, this lab was very difficult because of the use of different input voltage ranges from the ADC and the computer. Initial thoughts were that there was no data coming from the external jack from the computer. However, after careful research, we came to the conclusion that the data from a MAC just centered at 0, which doesnt nesessarily mean no data, it just means that it is scaled to be in that voltage range, which in our case was -0.8V to 0.8V. To combat this, an non-inverting op-amp circuit was created to shift the voltages from the MAC, to an acceptable range to the ADC. This shift resulted in a new scale of around 2.5V, which sucessfully created a good digital output from the ADC. 
 
 Filtering update
 
@@ -14,12 +17,39 @@ All parts have been ordered (ADC, DAC, audio jacks), as all other parts (opamps,
 
 ## Technical Diagrams
 
+The source code for this lab can be found in this [GitHub repo](https://github.com/eoinoconnell04/E155-Project).
+
+The datasheet for the Op-amp can be found in this [Technical document](https://ww1.microchip.com/downloads/en/DeviceDoc/MCP6001-1R-1U-2-4-1-MHz-Low-Power-Op-Amp-DS20001733L.pdf).
+
+The datasheet for the DAC can be found in this [Technical document](https://cdn-learn.adafruit.com/assets/assets/000/135/546/original/pcm5102.pdf?1741011272).
+
+The datasheet for the ADC can be found in this [Technical document](https://www.ti.com/lit/ds/symlink/pcm1808.pdf?ts=1760356026809).
+
 ### Schematics
+
+Below are images for all electronic components for this lab. Non on-board parts used for this lab are a DAC, ADC, Op-amp, Speakers, and an external laptop. 
+
+![Figure 1: The schematic above shows all electric components for this lab included with electronic parts.](../images/Project_schematic.png)
+
+Above pictures the electrical circuit for our design. It portrays resistors, and all other electrical components used for the design. 
+
+![Figure 2: This schematic shows op-amp circuit created to shift voltages into the ADC.](../images/Op-amp-project.png)
 
 ### Block Diagrams
 
+For completion of the mid-point checkoff we needed a block diagram to show the overall interfaces / protocols used for this lab. The main ones used are I2S, and SPI communication. I2S was used for communication between the ADC -> FPGA -> DAC. This protocol was created by Lattice, the designer of the FPGA. SPI communication was created in lab 6, however ADC initilization is needed to take in the input from the speakers.  
+
+![Figure 3: This Block diagram shows parts and all interfaces used for this lab](../images/flow_chart.png)
+
 ## Microcontroller Routines
 
+As mentioned before we have not done many things on the MCU yet far, only research into how ADC is initialized. Below is a Routies / block diagram for how we will use the MCU in the coming weeks. 
 
 
+## Conclusion
 
+I think this project is going fairly well thus far in terms of how far we have come. I think we need to work better on time manageent in terms of simulation for modules we have created. 
+
+## Suggestions
+
+Going forward, our group needs to finish filtering audio from the ADC fully. Then use a potentiometer and calibrate these filters via SPI protocol from the MCU. The only high bottoleneck going forward is the setup for the onboard ADC on the MCU.  
