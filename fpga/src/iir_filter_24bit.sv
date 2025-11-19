@@ -49,22 +49,24 @@ module iir_filter_24bit(
 	logic signed [39:0] acc;
     
     // Compute multiplication products
+	
     assign b0_x0 = b0 * latest_sample;
     assign b1_x1 = b1 * x1;
     assign b2_x2 = b2 * x2;
     assign a1_y1 = a1 * y1;
     assign a2_y2 = a2 * y2;
+	
     
     // Accumulate: sum the products, then shift right by 14 bits for Q2.14
     // Cast to 42-bit for accumulation to prevent overflow
-	/*
-    assign acc = $signed({b0_x0[39], b0_x0}) + 
+	
+    /*assign acc = $signed({b0_x0[39], b0_x0}) + 
                  $signed({b1_x1[39], b1_x1}) + 
                  $signed({b2_x2[39], b2_x2}) - 
                  $signed({a1_y1[39], a1_y1}) - 
-                 $signed({a2_y2[39], a2_y2});
-				 */
-	assign acc = b0_x0 + b1_x1 + b2_x2 - a1_y1 - a2_y2;
+                 $signed({a2_y2[39], a2_y2});*/
+				 
+	assign acc = b0_x0;// + b1_x1 + b2_x2 + a1_y1 + a2_y2; // THIS IS THE LINE EXPOSING PROBLEMS
 				 
     
     // Sequential logic for state updates
@@ -78,7 +80,8 @@ module iir_filter_24bit(
         end else begin
             // Extract result with proper Q2.14 scaling (shift right 14 bits)
             // Take bits [37:14] from the 42-bit accumulator
-            
+       
+			
 			//filtered_output <= acc[39:16];
 			filtered_output <= acc[37:14];
 			//filtered_output <= b0_x0[37:14];
