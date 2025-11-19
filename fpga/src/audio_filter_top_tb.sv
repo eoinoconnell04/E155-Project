@@ -21,6 +21,20 @@ module audio_filter_top_tb;
     // Expected output for comparison
     logic signed [23:0] expected_output;
     
+    // ===== FILTER COEFFICIENTS - UPDATE THESE TO MATCH YOUR MODULE =====
+    // These should match the coefficients in audio_filter_top.sv
+    parameter logic signed [15:0] TB_B0 = 16'sd15871;   // 0.9676
+    parameter logic signed [15:0] TB_B1 = -16'sd30917;  // -1.8868
+    parameter logic signed [15:0] TB_B2 = 16'sd15106;   // 0.9221
+    parameter logic signed [15:0] TB_A1 = -16'sd30906;  // -1.8861
+    parameter logic signed [15:0] TB_A2 = 16'sd14618;   // 0.8922
+    
+    // Compute expected output using a software model of the filter
+    logic signed [15:0] model_x1, model_x2;  // Previous inputs (16-bit)
+    logic signed [15:0] model_y1, model_y2;  // Previous outputs (16-bit)
+    logic signed [39:0] model_acc;
+    logic signed [15:0] model_y_current;
+    
     // Instantiate DUT (Device Under Test)
     audio_filter_top dut (
         .clk(clk),
@@ -44,13 +58,19 @@ module audio_filter_top_tb;
         // Initialize signals
         reset = 1;
         adc_data = 24'sd0;
+        model_x1 = 16'sd0;
+        model_x2 = 16'sd0;
+        model_y1 = 16'sd0;
+        model_y2 = 16'sd0;
         
         // Hold reset for a few cycles
         repeat(5) @(posedge clk);
         reset = 0;
         @(posedge clk);
         
-        $display("=== Unity Gain Filter Test ===");
+        $display("=== Bandpass Filter Test ===");
+        $display("Coefficients: b0=%d, b1=%d, b2=%d, a1=%d, a2=%d", 
+                 TB_B0, TB_B1, TB_B2, TB_A1, TB_A2);
         $display("Time\t\tADC Input\tDAC Output\tExpected\tMatch");
         $display("----\t\t---------\t----------\t--------\t-----");
         
@@ -128,6 +148,17 @@ module audio_filter_top_tb;
         // Apply input
         adc_data = input_val;
         
+        // Convert to 16-bit (same as DUT does)
+        input_16bit = input_val[23:8];
+        
+        // Compute expected output using filter model
+        model_acc = (TB_B0 * input_16bit) + 
+                    (TB_B1 * model_x1) + 
+                    (TB_B2 * model_x2) - 
+                    (TB_A1 * model_y1) - 
+                    (TB_A2 * model_y2);
+        model_y_current = model_acc[37:14];  // Q2.14 scaling
+        
         // Wait for two clock cycles (account for pipeline delay)
         @(posedge clk);
         @(posedge clk);
@@ -135,14 +166,16 @@ module audio_filter_top_tb;
         // Extract actual 24-bit output from DAC data (bottom 24 bits)
         actual_output = dac_data[23:0];
         
-        // Calculate expected output:
-        // 1. Convert 24-bit input to 16-bit (top 16 bits)
-        input_16bit = input_val[23:8];
-        // 2. Unity gain means output should equal input (in 16-bit domain)
-        // 3. Convert back to 24-bit (shift left 8 bits)
-        expected_24bit = {input_16bit, 8'h00};
+        // Expected output: convert 16-bit model output back to 24-bit
+        expected_24bit = {model_y_current, 8'h00};
         
-        // Check if outputs match (allow small tolerance due to pipeline delays)
+        // Update model state for next iteration
+        model_x2 = model_x1;
+        model_x1 = input_16bit;
+        model_y2 = model_y1;
+        model_y1 = model_y_current;
+        
+        // Check if outputs match
         match = (actual_output == expected_24bit);
         
         // Display results
@@ -155,8 +188,11 @@ module audio_filter_top_tb;
             $display("ERROR: Mismatch detected!");
             $display("  Input (24-bit): %d (0x%06h)", input_val, input_val);
             $display("  Input (16-bit): %d (0x%04h)", input_16bit, input_16bit);
+            $display("  Model y[n]: %d (0x%04h)", model_y_current, model_y_current);
             $display("  Expected: %d (0x%06h)", expected_24bit, expected_24bit);
             $display("  Actual:   %d (0x%06h)", actual_output, actual_output);
+            $display("  Model state: x1=%d, x2=%d, y1=%d, y2=%d", 
+                     model_x1, model_x2, model_y1, model_y2);
         end
     endtask
     
