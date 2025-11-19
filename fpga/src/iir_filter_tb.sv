@@ -41,7 +41,7 @@ module iir_filter_tb;
         fail_count = 0;
 
         // simple test coefficients
-        b0 = 16'sd32768;  // 1.0
+        b0 = 16'sd32767;  // 1.0
         b1 = 16'sd0;      // 0.0
         b2 = 16'sd0;      // 0.0
         a1 = 16'sd0;      // 0.0
