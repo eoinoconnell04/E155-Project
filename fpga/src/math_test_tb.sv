@@ -16,7 +16,7 @@ module math_test_tb();
     logic [11:0] testvectors[10000:0];  
 
     // instantiate device under test
-    display dut(tap, data, out);
+    math_test dut(tap, data, out);
 
     // generate clock
     always begin
@@ -25,7 +25,7 @@ module math_test_tb();
 
     // at start of test, load vectors and pulse reset
     initial begin
-        $readmemb("math_test.tv", testvectors);
+        $readmemb("../fpga/src/math_test.tv", testvectors);
 		$display("Loaded test vector 0: %b", testvectors[0]);
         vectornum = 0; errors = 0; reset = 1; #22; reset = 0;
     end
