@@ -28,22 +28,30 @@ module audio_filter_top(
 
     // ===== Filter coefficients in Q2.14 format =====
     logic signed [15:0] b0, b1, b2, a1, a2;
-
+/*
     // ===== Unity gain passthrough (1.0) for testing =====
     assign b0 = 16'sd16384;   // 1.0
     assign b1 = 16'sd0;       // 0.0
     assign b2 = 16'sd0;       // 0.0
     assign a1 = 16'sd0;       // 0.0
-    assign a2 = 16'sd0;       // 0.0
-
+    assign a2 = 16'sd0;       // 0.0 
+	*/
+	/*
+	// ===== 2 nonzero =====
+    assign b0 = 16'sd16384;   // 1.0
+    assign a1 = -16'sd8192;       // -0.5
+    assign b2 = 16'sd0;       // 0.0
+    assign b1 = 16'sd0;       // 0.0
+    assign a2 = 16'sd0;       // 0.0 
+*/
     // ===== Active filter coefficients (example) =====
-    /*
+    
     assign b0 = 16'sd15871;   // 0.9676 * 16384 â‰ˆ 15871
     assign b1 = -16'sd30917;  // -1.8868 * 16384 â‰ˆ -30917
     assign b2 = 16'sd15106;   // 0.9221 * 16384 â‰ˆ 15106
     assign a1 = -16'sd30906;  // -1.8861 * 16384 â‰ˆ -30906
     assign a2 = 16'sd14618;   // 0.8922 * 16384 â‰ˆ 14618
-    */
+    
 
     // ===== Instantiate 16-bit IIR filter =====
     iir_filter filter_inst (
