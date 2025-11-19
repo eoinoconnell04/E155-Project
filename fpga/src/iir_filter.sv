@@ -26,8 +26,8 @@ module iir_filter(
         if (reset) begin
             x1 <= 16'sd0;
             x2 <= 16'sd0;
-            y1 <= 32'sd0;
-            y2 <= 32'sd0;
+            y1 <= 16'sd0;
+            y2 <= 16'sd0;
             filtered_output <= 16'sd0;
         end else begin
             // Perform the biquad calculation with signed math
