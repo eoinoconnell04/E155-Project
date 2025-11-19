@@ -43,8 +43,18 @@ always_ff @(posedge lmmi_clk_i)
 		end
 	end 
 	
-audio_filter_top filter(lmmi_clk_i, ~reset_n_i, latch_data, dac_data); 
-//assign dac_data = latch_data;
+logic signed [23:0] s_adc;
+logic signed [23:0] s_proc;
+
+assign s_adc  = latch_data[23:0];     // signed interpretation
+assign s_proc = s_adc >>> 5;          // arithmetic divide by two
+
+assign dac_data = {8'd0, s_proc};     // repack for the 32-bit I2S interface
+	
+	
+//audio_filter_top filter(lmmi_clk_i, ~reset_n_i, latch_data, dac_data); 
+//assign dac_data = $signed(latch_data) >>> 1;
+//assign dac_data = latch_data; 
 assign adc_test = adc_valid;
 
 //assign dac_data = counter;
