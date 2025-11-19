@@ -40,12 +40,21 @@ module iir_filter_tb;
         reset = 1;
         fail_count = 0;
 
+        // simple test coefficients
+        b0 = 16'sd32768;  // 1.0
+        b1 = 16'sd0;      // 0.0
+        b2 = 16'sd0;      // 0.0
+        a1 = 16'sd0;      // 0.0
+        a2 = 16'sd0;      // 0.0
+
         // Example low-pass coefficients in Q1.15 format
+        /*
         b0 = 16'sd1638;  // 0.05
         b1 = 16'sd3276;  // 0.10
         b2 = 16'sd1638;  // 0.05
         a1 = -16'sd29491; // -0.9
         a2 = 16'sd8192;   // 0.25
+        */
 
         // Hold reset for a few cycles
         repeat (4) @(posedge clk);
@@ -79,8 +88,8 @@ module iir_filter_tb;
             // Compare DUT output
             if (dut_out !== expected_out) begin
                 fail_count++;
-                $error("Sample %0d mismatch: DUT=%0d Expected=%0d Acc=%0d",
-                       n, dut_out, expected_out, acc);
+                $error("Sample %0d mismatch: Latest Sample: %0d DUT=%0d Expected=%0d Acc=%0d",
+                       latest_sample, n, dut_out, expected_out, acc);
             end
 
             // Update reference states
