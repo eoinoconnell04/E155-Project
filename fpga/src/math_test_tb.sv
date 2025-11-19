@@ -10,13 +10,13 @@ Note: Testbench modified from my testbench from E85 Lab 3.
 
 module math_test_tb();
     logic clk, reset;
-    logic [3:0] data, tap, output;
+    logic [3:0] data, tap, out;
     logic [3:0] expected;
     logic [31:0] vectornum, errors;
     logic [11:0] testvectors[10000:0];  
 
     // instantiate device under test
-    display dut(tap, data, output);
+    display dut(tap, data, out);
 
     // generate clock
     always begin
@@ -39,9 +39,9 @@ module math_test_tb();
     // check results on falling edge of clk
     always @(negedge clk)
         if (~reset) begin // skip during reset
-            if (output !== expected) begin // check result
+            if (out !== expected) begin // check result
                 $display("Error: input data = %b, tap = %b", data, tap);
-                $display(" output = %b (%b expected)", output, expected);
+                $display(" output = %b (%b expected)", out, expected);
                 errors = errors + 1;
             end
             vectornum = vectornum + 1;
