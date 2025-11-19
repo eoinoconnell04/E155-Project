@@ -43,8 +43,10 @@ always_ff @(posedge lmmi_clk_i)
 		end
 	end 
 	
-assign dac_data = latch_data;
+audio_filter_top filter(clk, reset, latch_data, dac_data); 
+//assign dac_data = latch_data;
 assign adc_test = adc_valid;
+
 //assign dac_data = counter;
 //assign adc_i2s_value = i2s_sd_i;
 
