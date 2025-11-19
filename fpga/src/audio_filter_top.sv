@@ -2,8 +2,8 @@
 Author: Eoin O'Connell
 Email: eoconnell@hmc.edu
 Date: Nov. 19, 2025
-Module Function: Audio processing top module with IIR filter
-Currently uses static coefficients for testing
+Module Function: Audio processing top module with 16-bit IIR filter
+Structure matches 24-bit version
 */
 module audio_filter_top(
     input  logic clk,
@@ -11,51 +11,46 @@ module audio_filter_top(
     input  logic signed [23:0] adc_data,    // 24-bit signed audio input
     output logic [31:0] dac_data            // DAC data (24-bit audio + 8-bit padding)
 );
+    // ===== Temporary register for input =====
     logic signed [23:0] temp;
-    
     always_ff @(posedge clk) begin
         temp <= adc_data;
-    end 
-    
-    // Convert 24-bit to 16-bit by taking the top 16 bits (arithmetic right shift by 8)
+    end
+
+    // ===== Convert 24-bit input to 16-bit (top 16 bits) =====
     logic signed [15:0] audio_in;
-    assign audio_in = temp[23:8];  // Take top 16 bits of 24-bit sample
-    
-    // Filtered audio output (16-bit)
+    assign audio_in = temp[23:8];
+
+    // ===== Filtered audio output (16-bit) =====
     logic signed [15:0] audio_out;
-    
-    // Convert 16-bit output back to 24-bit by left-shifting 8 bits, then pack into 32-bit DAC format
+
+    // ===== Convert 16-bit output back to 24-bit for DAC =====
     logic signed [23:0] audio_out_24;
-    assign audio_out_24 = {audio_out, 8'h00};  // Shift left by 8 bits
-    
-    // Pack filtered audio into bottom 24 bits of DAC data, zero-pad top 8 bits
+    assign audio_out_24 = {audio_out, 8'h00};  // shift left 8 bits
+
+    // ===== Pack into DAC data: top 8 bits zero, bottom 24 bits audio =====
     assign dac_data = {8'd0, audio_out_24};
-    
-    // Filter coefficients in Q2.14 format
+
+    // ===== Filter coefficients in Q2.14 format =====
     logic signed [15:0] b0, b1, b2, a1, a2;
-    
-    // Active filter coefficients (Bandpass or similar)
-    // b = [0.9676, -1.8868, 0.9221]
-    // a = [1.0000, -1.8861, 0.8922]
-    // Note: a0 is always 1.0 and not used in the biquad implementation
-	/*
-    assign b0 = 16'sd15871;   // 0.9676 * 16384 â‰ˆ 15871
-    assign b1 = -16'sd30917;  // -1.8868 * 16384 â‰ˆ -30917
-    assign b2 = 16'sd15106;   // 0.9221 * 16384 â‰ˆ 15106
-    assign a1 = -16'sd30906;  // -1.8861 * 16384 â‰ˆ -30906
-    assign a2 = 16'sd14618;   // 0.8922 * 16384 â‰ˆ 14618
-	*/
-    
-    // Unity gain passthrough for testing (uncomment to use)
-    
+
+    // ===== Unity gain passthrough (1.0) for testing =====
     assign b0 = 16'sd16384;   // 1.0
     assign b1 = 16'sd0;       // 0.0
     assign b2 = 16'sd0;       // 0.0
     assign a1 = 16'sd0;       // 0.0
     assign a2 = 16'sd0;       // 0.0
-    
-    
-    // Instantiate IIR filter
+
+    // ===== Active filter coefficients (example) =====
+    /*
+    assign b0 = 16'sd15871;   // 0.9676 * 16384 ≈ 15871
+    assign b1 = -16'sd30917;  // -1.8868 * 16384 ≈ -30917
+    assign b2 = 16'sd15106;   // 0.9221 * 16384 ≈ 15106
+    assign a1 = -16'sd30906;  // -1.8861 * 16384 ≈ -30906
+    assign a2 = 16'sd14618;   // 0.8922 * 16384 ≈ 14618
+    */
+
+    // ===== Instantiate 16-bit IIR filter =====
     iir_filter filter_inst (
         .clk(clk),
         .reset(reset),
@@ -67,4 +62,5 @@ module audio_filter_top(
         .a2(a2),
         .filtered_output(audio_out)
     );
+
 endmodule
