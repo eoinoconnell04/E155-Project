@@ -89,7 +89,7 @@ module iir_filter_tb;
             if (dut_out !== expected_out) begin
                 fail_count++;
                 $error("Sample %0d mismatch: Latest Sample: %0d DUT=%0d Expected=%0d Acc=%0d",
-                       latest_sample, n, dut_out, expected_out, acc);
+                       n, latest_sample, dut_out, expected_out, acc);
             end
 
             // Update reference states
