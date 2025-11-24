@@ -11,9 +11,25 @@ Inital struggles for this design was first fully integrating a top module to alr
 
 Secondly, this lab was very difficult because of the use of different input voltage ranges from the ADC and the computer. Initial thoughts were that there was no data coming from the external jack from the computer. However, after careful research, we came to the conclusion that the data from a MAC just centered at 0, which doesnt nesessarily mean no data, it just means that it is scaled to be in that voltage range, which in our case was -0.8V to 0.8V. To combat this, an non-inverting op-amp circuit was created to shift the voltages from the MAC, to an acceptable range to the ADC. This shift resulted in a new scale of around 2.5V, which sucessfully created a good digital output from the ADC. 
 
-Filtering update
+### Filtering
+
+We having written a filtering module, and are still trying to debug a subtle issue with the coefficients. It works for unity gain, but not with non-zero coefficients. We are unsure if this is a timing issue, bit manipulation issue, or a coefficient issue. It is plausible that the hardware works as intended but our calculations for coefficients are off.
+
+We are also not manually instantiating the DSP blocks, but first going to write a naive version and see how it performs. For now, it seems to be keeping up fine. We can handle a slight delay, but do not want noticable latency.
+
+### Parts
 
 All parts have been ordered (ADC, DAC, audio jacks), as all other parts (opamps, resistors, trim pots, etc.) are all from the stockroom.
+
+### Completed:
+- Playing unfiltered Audio
+- SPI connection between MCU and FPGA (from lab 7)
+- RX/TX Chain
+- Left and Right Audio separation
+
+### Todo:
+- Debug filtering issue
+- Implement ADC for knobs on MCU
 
 ## Technical Diagrams
 
