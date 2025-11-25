@@ -1,10 +1,6 @@
 // convertDeviceString.v
-begin
-    localparam MAX_STRING_LENGTH = 85;
-end
-
 function [255:0] convertDeviceString; 
-    input [(85)*8-1:0] attributeValue;  // Use 85 directly instead of MAX_STRING_LENGTH
+    input [(85)*8-1:0] attributeValue;
 
     integer i, j;
     integer decVal;
@@ -27,7 +23,7 @@ function [255:0] convertDeviceString;
         end
         convertDeviceString = 0;
         checkType = "N";
-        for (i=85-1; i>=1 ; i=i-1) begin  // Use 85 directly
+        for (i=84; i>=1 ; i=i-1) begin  // 85-1 = 84
             for (j=1; j<=8; j=j+1) begin 
                 character[j] = attributeValue[i*8-j];
             end 
