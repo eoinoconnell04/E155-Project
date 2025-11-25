@@ -154,7 +154,7 @@ module MAC16_wrapper_tb;
 
 endmodule
 ```
-
+/*
 **This testbench includes:**
 
 1. **15 comprehensive test cases** covering:
@@ -180,3 +180,4 @@ endmodule
 ```
 [PASS] Test 1: (-5) * 3 + 10 = -5
        A=-5, B=3, C=10 => Result=-5 (0xfffffffb)
+       */
