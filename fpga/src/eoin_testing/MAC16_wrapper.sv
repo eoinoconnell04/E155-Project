@@ -44,7 +44,7 @@ module MAC16_wrapper (
         c_reg <= c_in;
     end
     
-    MAC16 #(
+    MAC16_SIM #(
         .NEG_TRIGGER("0b0"),
         .A_REG("0b1"),      // Enable input register
         .B_REG("0b1"),      // Enable input register
