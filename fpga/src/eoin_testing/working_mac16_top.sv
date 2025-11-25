@@ -1,4 +1,4 @@
-module working_mac16_test (
+module working_mac16_top (
     input wire clk,
     output wire signed [31:0] result
 );
