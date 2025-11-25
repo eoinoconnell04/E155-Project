@@ -41,13 +41,13 @@ module MAC16_wrapper_tb;
         pass_count = 0;
         fail_count = 0;
         
-        // Initialize inputs
+        // Initialize inputs to zero
         a_in = 0;
         b_in = 0;
         c_in = 0;
         
-        // Wait for initial settling
-        #20;
+        // Wait longer for initialization and reset propagation
+        repeat(10) @(posedge clk);
         
         // Test Case 1: Negative * Positive + Positive
         test_case(-16'sd5, 16'sd3, 16'sd10, "(-5) * 3 + 10 = -5");
@@ -110,7 +110,7 @@ module MAC16_wrapper_tb;
         test_case(-16'sd32768, 16'sd2, 16'sd0, "(-32768) * 2 + 0 = -65536");
         
         // Wait for final result
-        #100;
+        repeat(10) @(posedge clk);
         
         // Print summary
         $display("========================================");
@@ -141,7 +141,8 @@ module MAC16_wrapper_tb;
         begin
             test_count = test_count + 1;
             
-            // Apply inputs
+            // Apply inputs on clock edge
+            @(posedge clk);
             a_in = a;
             b_in = b;
             c_in = c;
@@ -150,11 +151,10 @@ module MAC16_wrapper_tb;
             calc_expected = (a * b) + c;
             expected_result = calc_expected;
             
-            // Wait for one clock cycle to register inputs
-            @(posedge clk);
-            
-            // Wait for MAC16 pipeline (account for registered inputs)
-            repeat(3) @(posedge clk);  // Allow time for pipelined operation
+            // Wait for MAC16 pipeline 
+            // MAC16 has A_REG, B_REG, C_REG enabled, so we need to wait for:
+            // 1 cycle for input registration + some cycles for computation
+            repeat(5) @(posedge clk);
             
             // Check result
             if (result === expected_result) begin
@@ -162,6 +162,12 @@ module MAC16_wrapper_tb;
                 $display("       A=%0d, B=%0d, C=%0d => Result=%0d (0x%08h)", 
                          a, b, c, result, result);
                 pass_count = pass_count + 1;
+            end else if (result === 32'bx) begin
+                $display("[FAIL] Test %0d: %s", test_count, description);
+                $display("       A=%0d, B=%0d, C=%0d", a, b, c);
+                $display("       Expected: %0d (0x%08h)", expected_result, expected_result);
+                $display("       Got:      UNKNOWN (x values - check MAC16 configuration)");
+                fail_count = fail_count + 1;
             end else begin
                 $display("[FAIL] Test %0d: %s", test_count, description);
                 $display("       A=%0d, B=%0d, C=%0d", a, b, c);
@@ -170,11 +176,14 @@ module MAC16_wrapper_tb;
                 fail_count = fail_count + 1;
             end
             $display("");
-            
-            // Small delay between tests
-            #10;
         end
     endtask
+    
+    // Monitor for debugging
+    initial begin
+        $monitor("Time=%0t clk=%b a_in=%0d b_in=%0d c_in=%0d result=%0d (0x%08h)", 
+                 $time, clk, a_in, b_in, c_in, result, result);
+    end
     
     // Optional: Generate VCD waveform file
     initial begin
