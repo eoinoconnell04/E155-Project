@@ -4,12 +4,11 @@ module MAC16_wrapper_tb;
 
     // Testbench signals
     reg clk;
+    reg signed [15:0] a_in;
+    reg signed [15:0] b_in;
+    reg signed [15:0] c_in;
     wire signed [31:0] result;
     
-    // Internal signals to monitor
-    reg signed [15:0] test_a;
-    reg signed [15:0] test_b;
-    reg signed [15:0] test_c;
     reg signed [31:0] expected_result;
     
     integer test_count;
@@ -17,8 +16,11 @@ module MAC16_wrapper_tb;
     integer fail_count;
     
     // Instantiate the DUT (Device Under Test)
-    top_level dut (
+    MAC16_wrapper dut (
         .clk(clk),
+        .a_in(a_in),
+        .b_in(b_in),
+        .c_in(c_in),
         .result(result)
     );
     
@@ -39,10 +41,15 @@ module MAC16_wrapper_tb;
         pass_count = 0;
         fail_count = 0;
         
+        // Initialize inputs
+        a_in = 0;
+        b_in = 0;
+        c_in = 0;
+        
         // Wait for initial settling
         #20;
         
-        // Test Case 1: Positive * Positive + Positive
+        // Test Case 1: Negative * Positive + Positive
         test_case(-16'sd5, 16'sd3, 16'sd10, "(-5) * 3 + 10 = -5");
         
         // Test Case 2: Small positive numbers
@@ -87,6 +94,21 @@ module MAC16_wrapper_tb;
         // Test Case 15: Large multiplication result
         test_case(16'sd1000, 16'sd1000, 16'sd0, "1000 * 1000 + 0 = 1000000");
         
+        // Test Case 16: Positive * Positive + Positive
+        test_case(16'sd15, 16'sd20, 16'sd100, "15 * 20 + 100 = 400");
+        
+        // Test Case 17: All negative
+        test_case(-16'sd10, -16'sd5, -16'sd20, "(-10) * (-5) + (-20) = 30");
+        
+        // Test Case 18: Small negative * large positive
+        test_case(-16'sd2, 16'sd1000, 16'sd500, "(-2) * 1000 + 500 = -1500");
+        
+        // Test Case 19: Testing overflow handling (large result)
+        test_case(16'sd10000, 16'sd10000, 16'sd0, "10000 * 10000 + 0 = 100000000");
+        
+        // Test Case 20: Near maximum negative
+        test_case(-16'sd32768, 16'sd2, 16'sd0, "(-32768) * 2 + 0 = -65536");
+        
         // Wait for final result
         #100;
         
@@ -118,66 +140,46 @@ module MAC16_wrapper_tb;
         
         begin
             test_count = test_count + 1;
-            test_a = a;
-            test_b = b;
-            test_c = c;
+            
+            // Apply inputs
+            a_in = a;
+            b_in = b;
+            c_in = c;
             
             // Calculate expected result
             calc_expected = (a * b) + c;
             expected_result = calc_expected;
             
+            // Wait for one clock cycle to register inputs
+            @(posedge clk);
+            
             // Wait for MAC16 pipeline (account for registered inputs)
-            #40;  // Give enough time for pipelined operation
+            repeat(3) @(posedge clk);  // Allow time for pipelined operation
             
             // Check result
             if (result === expected_result) begin
                 $display("[PASS] Test %0d: %s", test_count, description);
                 $display("       A=%0d, B=%0d, C=%0d => Result=%0d (0x%08h)", 
-                         test_a, test_b, test_c, result, result);
+                         a, b, c, result, result);
                 pass_count = pass_count + 1;
             end else begin
                 $display("[FAIL] Test %0d: %s", test_count, description);
-                $display("       A=%0d, B=%0d, C=%0d", test_a, test_b, test_c);
+                $display("       A=%0d, B=%0d, C=%0d", a, b, c);
                 $display("       Expected: %0d (0x%08h)", expected_result, expected_result);
                 $display("       Got:      %0d (0x%08h)", result, result);
                 fail_count = fail_count + 1;
             end
             $display("");
+            
+            // Small delay between tests
+            #10;
         end
     endtask
     
     // Optional: Generate VCD waveform file
     initial begin
-        $dumpfile("top_level_tb.vcd");
-        $dumpvars(0, top_level_tb);
+        $dumpfile("MAC16_wrapper_tb.vcd");
+        $dumpvars(0, MAC16_wrapper_tb);
     end
 
 endmodule
-```
-/*
-**This testbench includes:**
-
-1. **15 comprehensive test cases** covering:
-   - Positive × Positive operations
-   - Negative × Negative operations
-   - Mixed sign operations
-   - Zero handling
-   - Edge cases (max/min values)
-   - Large number multiplications
-
-2. **Automatic verification** that compares hardware results with expected software calculations
-
-3. **Detailed reporting**:
-   - Pass/Fail status for each test
-   - Input values and results in both decimal and hex
-   - Final summary with pass/fail counts
-
-4. **Pipeline handling** with appropriate delays for registered inputs
-
-5. **Waveform generation** for debugging (VCD file)
-
-**Expected output format:**
-```
-[PASS] Test 1: (-5) * 3 + 10 = -5
-       A=-5, B=3, C=10 => Result=-5 (0xfffffffb)
-       */
