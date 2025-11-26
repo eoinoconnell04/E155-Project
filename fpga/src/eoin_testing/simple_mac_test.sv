@@ -79,6 +79,9 @@ module simple_mac_test;
         a = 16'd5;
         b = 16'd3;
         c = 16'd10;
+        repeat(10) @(posedge clk);  // ← Increase delay to account for pipeline
+        $display("Time=%0t: A=%0d, B=%0d, C=%0d => O=%0d (hex=0x%h)", 
+            $time, $signed(a), $signed(b), $signed(c), $signed(o), o);
         
         repeat(5) @(posedge clk);
         
