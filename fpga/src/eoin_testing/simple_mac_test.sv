@@ -2,6 +2,7 @@
 
 module simple_mac_test;
     reg clk;
+    reg rst;
     reg [15:0] a, b, c, d;
     wire [31:0] o;
     wire co, accumco, signextout;
@@ -12,13 +13,24 @@ module simple_mac_test;
         forever #5 clk = ~clk;
     end
     
+    // Reset generation
+    initial begin
+        rst = 1;
+        #25 rst = 0;
+    end
+    
     // Simple instantiation of MAC16
     MAC16 #(
         .A_SIGNED("0b1"),
-        .B_SIGNED("0b1")
+        .B_SIGNED("0b1"),
+        .MODE_8x8("0b1"),
+        .A_REG("0b0"),
+        .B_REG("0b0"),
+        .C_REG("0b0"),
+        .D_REG("0b0")
     ) dut (
         .CLK(clk),
-        .CE(1'b1),
+        .CE(~rst),  // Don't enable until after reset
         .A15(a[15]), .A14(a[14]), .A13(a[13]), .A12(a[12]),
         .A11(a[11]), .A10(a[10]), .A9(a[9]), .A8(a[8]),
         .A7(a[7]), .A6(a[6]), .A5(a[5]), .A4(a[4]),
@@ -36,8 +48,8 @@ module simple_mac_test;
         .D7(d[7]), .D6(d[6]), .D5(d[5]), .D4(d[4]),
         .D3(d[3]), .D2(d[2]), .D1(d[1]), .D0(d[0]),
         .AHOLD(1'b0), .BHOLD(1'b0), .CHOLD(1'b0), .DHOLD(1'b0),
-        .IRSTTOP(1'b0), .IRSTBOT(1'b0),
-        .ORSTTOP(1'b0), .ORSTBOT(1'b0),
+        .IRSTTOP(rst), .IRSTBOT(rst),  // Use reset signals
+        .ORSTTOP(rst), .ORSTBOT(rst),
         .OLOADTOP(1'b0), .OLOADBOT(1'b0),
         .ADDSUBTOP(1'b0), .ADDSUBBOT(1'b0),
         .OHOLDTOP(1'b0), .OHOLDBOT(1'b0),
@@ -54,23 +66,29 @@ module simple_mac_test;
     );
     
     initial begin
-        $display("Simple MAC16 Test");
+        $display("Simple MAC16 Test with Reset");
         a = 0; b = 0; c = 0; d = 0;
         
-        #20;
+        // Wait for reset to complete
+        wait(rst == 0);
+        
+        repeat(5) @(posedge clk);
         
         // Test: 5 * 3 + 10 = 25
+        @(posedge clk);
         a = 16'd5;
         b = 16'd3;
         c = 16'd10;
         
-        #20;
+        repeat(5) @(posedge clk);
+        
         $display("Time=%0t: A=%0d, B=%0d, C=%0d => O=%0d (hex=0x%h)", 
                  $time, $signed(a), $signed(b), $signed(c), $signed(o), o);
         
         if (o === 32'bx) begin
-            $display("ERROR: Output is X!");
-            $display("Check if MAC16_SIM.v is being compiled");
+            $display("ERROR: Output is still X!");
+            $display("The precompiled MAC16_SIM library may have issues");
+            $display("Check Lattice documentation for simulation models");
         end else if (o == 32'd25) begin
             $display("PASS!");
         end else begin
