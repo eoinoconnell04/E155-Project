@@ -23,7 +23,7 @@ module simple_mac_test;
     MAC16 #(
         .A_SIGNED("0b1"),
         .B_SIGNED("0b1"),
-        .MODE_8x8("0b1"),
+        .MODE_8x8("0b0"),  // ← Change this to 0 for 16x16 mode
         .A_REG("0b0"),
         .B_REG("0b0"),
         .C_REG("0b0"),
