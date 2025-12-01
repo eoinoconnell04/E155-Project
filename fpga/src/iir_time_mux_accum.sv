@@ -41,10 +41,11 @@ module iir_time_mux_accum(
         end else begin
             l_r_clk_d1 <= l_r_clk;
             l_r_clk_d2 <= l_r_clk_d1;
+            l_r_edge <= l_r_clk_d1 ^ l_r_clk_d2;
         end
     end
     
-    assign l_r_edge = l_r_clk_d1 ^ l_r_clk_d2;  // Any edge detection
+    //assign l_r_edge = l_r_clk_d1 ^ l_r_clk_d2;  // Any edge detection
     
     // Sample shift registers (x[n], x[n-1], x[n-2])
     logic signed [15:0] x_n, x_n1, x_n2;
@@ -194,7 +195,7 @@ module iir_time_mux_accum(
     end
     
     // Instantiate DSP slice with accumulator
-    MAC16_wrapper_accum_sim mac_inst(
+    MAC16_wrapper_accum mac_inst(
         .clk(clk),
         .reset(reset),
         .mac_rst(mac_rst),
