@@ -264,10 +264,12 @@ module iir_time_mux_accum_tb;
 
     // In testbench, add:
     always @(posedge clk) begin
-        if (dut.state == dut.MULT_B0 || dut.state == dut.MULT_A2) begin
+        /*if (dut.state == dut.MULT_B0 || dut.state == dut.MULT_A2) begin
             $display("  [DEBUG] State=%s, mac_a=%h, mac_b=%h, mac_result=%h (%d)", 
                     dut.state.name(), dut.mac_a, dut.mac_b, dut.mac_result, $signed(dut.mac_result));
-        end
+        end*/
+        $display("[DEBUG] State=%s, mac_a=%h, mac_b=%h, mac_result=%h (%d), mac_rst=%b, mac_ce=%b", 
+                state.name(), mac_a, mac_b, mac_result, $signed(mac_result), mac_rst, mac_ce);
     end
 
 endmodule
