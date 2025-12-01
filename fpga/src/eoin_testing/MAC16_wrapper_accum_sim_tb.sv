@@ -56,10 +56,11 @@ module MAC16_wrapper_accum_sim_tb;
             b_in = real_to_q2_14(b_val);
             ce = 1'b1;
             
-            // Wait for pipeline (2 cycles)
             @(posedge clk);
+            ce = 1'b0;  // ← Turn OFF CE after one cycle!
+            
             @(posedge clk);
-            #1;  // ← Add small delay to sample AFTER the clock edge updates the register
+            #1;
             
             $display("%s: a=%0.4f, b=%0.4f, result=%0.4f (0x%h)", 
                     description, a_val, b_val, q4_28_to_real(result), result);
