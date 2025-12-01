@@ -21,13 +21,13 @@ module simple_mac_test;
     
     // Simple instantiation of MAC16
     MAC16 #(
-        .A_SIGNED("0b1"),
-        .B_SIGNED("0b1"),
-        .MODE_8x8("0b0"),      // 16x16 mode
-        .A_REG("0b1"),         // ← Enable input register
-        .B_REG("0b1"),         // ← Enable input register
-        .C_REG("0b1"),         // ← Enable input register
-        .D_REG("0b0")
+        .A_SIGNED("1"),        // ← Changed from "0b1" to "1"
+        .B_SIGNED("1"),        // ← Changed from "0b1" to "1"
+        .MODE_8x8("0"),        // ← Changed from "0b0" to "0"
+        .A_REG("1"),           // ← Changed from "0b1" to "1"
+        .B_REG("1"),           // ← Changed from "0b1" to "1"
+        .C_REG("1"),           // ← Changed from "0b1" to "1"
+        .D_REG("0")            // ← Changed from "0b0" to "0"
     ) dut (
         .CLK(clk),
         .CE(~rst),  // Don't enable until after reset
