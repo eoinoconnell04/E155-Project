@@ -22,7 +22,7 @@ module MAC16_wrapper_accum_4bit_scaled (
     
     // Register inputs
     always_ff @(posedge clk) begin
-        if (!rst) begin
+        if (!reset) begin
             a_reg <= 4'd0;
             b_reg <= 4'd0;
             ce_reg <= 1'b0;
@@ -35,7 +35,7 @@ module MAC16_wrapper_accum_4bit_scaled (
     
     // MAC operation
     always_ff @(posedge clk) begin
-        if (!rst) begin
+        if (!mac_rst) begin
             accumulator_small <= 12'd0;
         end else if (ce_reg) begin
             accumulator_small <= (a_reg * b_reg) + accumulator_small;
