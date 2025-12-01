@@ -1,6 +1,7 @@
 module MAC16_wrapper_accum_sim (
     input logic clk,
-    input logic rst,                    // Active-high reset
+    input logic reset,              // system level reset
+    input logic mac_rst,                    // Reset signal for accumulator
     input logic ce,                       // Clock enable
     input logic signed [15:0] a_in,       // Signed 16-bit input A
     input logic signed [15:0] b_in,       // Signed 16-bit input B
@@ -16,7 +17,7 @@ module MAC16_wrapper_accum_sim (
     
     // Register inputs
     always_ff @(posedge clk) begin
-        if (rst) begin
+        if (!reset) begin
             a_reg <= 16'd0;
             b_reg <= 16'd0;
             ce_reg <= 1'b0;
@@ -29,7 +30,7 @@ module MAC16_wrapper_accum_sim (
     
     // MAC operation: result = a * b + previous_result
     always_ff @(posedge clk) begin
-        if (rst) begin
+        if (!mac_rst) begin
             accumulator <= 32'd0;
         end else if (ce) begin
             // Multiply and accumulate

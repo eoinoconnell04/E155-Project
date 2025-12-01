@@ -1,6 +1,7 @@
 module MAC16_wrapper_accum_4bit_scaled (
     input logic clk,
-    input logic rst,                    // Active-low reset
+    input logic reset,              // system level reset
+    input logic mac_rst,                    // Reset signal for accumulator
     input logic ce,                       // Clock enable
     input logic signed [15:0] a_in,       // Signed 16-bit input A (only top 4 bits used)
     input logic signed [15:0] b_in,       // Signed 16-bit input B (only top 4 bits used)

@@ -87,7 +87,7 @@ module iir_time_mux_accum(
     // MAC reset control: reset accumulator only when truly idle
     //assign mac_rst = !reset || (state == IDLE && !l_r_edge);
     assign mac_rst = reset && !(state == IDLE);
-    
+
     // MAC clock enable: enable during multiply states
     assign mac_ce = (state == MULT_B0) || (state == MULT_B1) || (state == MULT_B2) || 
                     (state == MULT_A1) || (state == MULT_A2);
@@ -195,7 +195,8 @@ module iir_time_mux_accum(
     // Instantiate DSP slice with accumulator
     MAC16_wrapper_accum_sim mac_inst(
         .clk(clk),
-        .rst(mac_rst),
+        .reset(reset),
+        .mac_rst(mac_rst),
         .ce(mac_ce),
         .a_in(mac_a), 
         .b_in(mac_b), 
