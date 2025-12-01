@@ -62,7 +62,7 @@ module three_band_eq(
     localparam logic signed [15:0] HIGH_B2 = 16'sh2E8B;  // ~0.728 in Q2.14
     localparam logic signed [15:0] HIGH_A1 = 16'shA5C3;  // ~-1.407 in Q2.14
     localparam logic signed [15:0] HIGH_A2 = 16'sh1F5C;  // ~0.490 in Q2.14
-    */
+    
     
     // Instantiate low-pass filter (processes bass frequencies)
     iir_time_mux_accum low_band_filter (
