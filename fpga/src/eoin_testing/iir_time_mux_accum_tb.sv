@@ -16,12 +16,8 @@ module iir_time_mux_accum_tb;
     localparam real SAMPLE_RATE = 48000.0;  // 48 kHz audio
     localparam real L_R_PERIOD = 1_000_000_000.0 / SAMPLE_RATE;  // ~20.83 us
     
-    // Low-pass filter coefficients (500Hz cutoff, Fs=48kHz, Q=0.707 Butterworth)
-    logic signed [15:0] b0 = 16'sh0147;  // ~0.020 in Q2.14
-    logic signed [15:0] b1 = 16'sh028E;  // ~0.040 in Q2.14
-    logic signed [15:0] b2 = 16'sh0147;  // ~0.020 in Q2.14
-    logic signed [15:0] a1 = 16'sh6A3D;  // ~1.659 in Q2.14
-    logic signed [15:0] a2 = 16'shD89F;  // ~-0.618 in Q2.14
+    // Coefficient variables (can be changed during test)
+    logic signed [15:0] b0, b1, b2, a1, a2;
     
     // System clock generation (100 MHz)
     initial begin
@@ -63,8 +59,8 @@ module iir_time_mux_accum_tb;
         scaled = value * (2.0 ** 14.0);  // Scale by 2^14
         if (scaled > 32767.0) scaled = 32767.0;
         if (scaled < -32768.0) scaled = -32768.0;
-        temp = integer'(scaled);  // Convert to integer first
-        return temp[15:0];        // Then extract 16 bits
+        temp = integer'(scaled);
+        return temp[15:0];
     endfunction
     
     // Function to convert Q2.14 to real
@@ -72,7 +68,7 @@ module iir_time_mux_accum_tb;
         return real'(value) / (2.0 ** 14.0);
     endfunction
     
-    // Task to generate a sine wave at given frequency
+    // Task to send a sine wave at given frequency
     task send_sine_wave(input real freq, input real amp, input integer num_samples);
         integer i;
         begin
@@ -80,12 +76,11 @@ module iir_time_mux_accum_tb;
                      num_samples, freq, amp);
             
             for (i = 0; i < num_samples; i++) begin
-                @(posedge l_r_clk);  // Wait for L/R clock edge (new sample time)
+                @(posedge l_r_clk);
                 time_sec = real'(i) / SAMPLE_RATE;
                 sample_value = amp * $sin(2.0 * 3.14159265359 * freq * time_sec);
                 audio_in = real_to_q2_14(sample_value);
                 
-                // Display every 100th sample
                 if (i % 100 == 0) begin
                     $display("Sample %0d: Input=%0.4f, Output=%0.4f", 
                              i, q2_14_to_real(audio_in), q2_14_to_real(audio_out));
@@ -94,7 +89,7 @@ module iir_time_mux_accum_tb;
         end
     endtask
     
-    // Task to send impulse (for impulse response testing)
+    // Task to send impulse
     task send_impulse(input real amp, input integer num_samples);
         integer i;
         begin
@@ -103,9 +98,9 @@ module iir_time_mux_accum_tb;
             for (i = 0; i < num_samples; i++) begin
                 @(posedge l_r_clk);
                 if (i == 0)
-                    audio_in = real_to_q2_14(amp);  // Impulse
+                    audio_in = real_to_q2_14(amp);
                 else
-                    audio_in = 16'd0;  // Zero for rest
+                    audio_in = 16'd0;
                 
                 if (i < 20 || i % 100 == 0) begin
                     $display("Sample %0d: Input=%0.4f, Output=%0.4f", 
@@ -115,7 +110,7 @@ module iir_time_mux_accum_tb;
         end
     endtask
     
-    // Task to send DC offset
+    // Task to send constant DC value
     task send_dc(input real dc_value, input integer num_samples);
         integer i;
         begin
@@ -125,7 +120,7 @@ module iir_time_mux_accum_tb;
                 @(posedge l_r_clk);
                 audio_in = real_to_q2_14(dc_value);
                 
-                if (i % 100 == 0) begin
+                if (i % 50 == 0) begin
                     $display("Sample %0d: Input=%0.4f, Output=%0.4f", 
                              i, q2_14_to_real(audio_in), q2_14_to_real(audio_out));
                 end
@@ -133,18 +128,39 @@ module iir_time_mux_accum_tb;
         end
     endtask
     
+    // Task to set coefficients
+    task set_coefficients(input real b0_val, input real b1_val, input real b2_val, 
+                          input real a1_val, input real a2_val);
+        begin
+            b0 = real_to_q2_14(b0_val);
+            b1 = real_to_q2_14(b1_val);
+            b2 = real_to_q2_14(b2_val);
+            a1 = real_to_q2_14(a1_val);
+            a2 = real_to_q2_14(a2_val);
+            $display("\nCoefficients set:");
+            $display("  b0=%0.4f (0x%h)", b0_val, b0);
+            $display("  b1=%0.4f (0x%h)", b1_val, b1);
+            $display("  b2=%0.4f (0x%h)", b2_val, b2);
+            $display("  a1=%0.4f (0x%h)", a1_val, a1);
+            $display("  a2=%0.4f (0x%h)", a2_val, a2);
+        end
+    endtask
+    
     // Main test sequence
     initial begin
-        $display("=== IIR Time-Multiplexed Filter Testbench ===");
+        $display("=== IIR Time-Multiplexed Filter Hardware Verification ===");
         $display("System Clock: %0.1f MHz", 1000.0/CLK_PERIOD);
         $display("Sample Rate: %0.1f kHz", SAMPLE_RATE/1000.0);
-        $display("Filter Type: Low-pass, 500Hz cutoff");
         $display("");
         
         // Initialize
         reset = 0;
         audio_in = 16'd0;
-        sample_count = 0;
+        b0 = 16'd0;
+        b1 = 16'd0;
+        b2 = 16'd0;
+        a1 = 16'd0;
+        a2 = 16'd0;
         
         // Reset pulse
         #100;
@@ -154,49 +170,88 @@ module iir_time_mux_accum_tb;
         // Wait for L/R clock to settle
         repeat(10) @(posedge l_r_clk);
         
-        // Test 1: Impulse response
-        send_impulse(1.0, 200);
+        //========================================
+        // TEST 1: Unity Gain Passthrough
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 1: Unity Gain Passthrough");
+        $display("Expected: Output = Input");
+        $display("****************************************");
+        set_coefficients(1.0, 0.0, 0.0, 0.0, 0.0);
+        send_impulse(1.0, 50);
+        send_sine_wave(1000.0, 0.5, 200);
         
-        // Test 2: Low frequency sine (should pass through filter)
-        send_sine_wave(100.0, 0.5, 500);  // 100 Hz
+        //========================================
+        // TEST 2: Half Gain
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 2: Half Gain");
+        $display("Expected: Output = 0.5 * Input");
+        $display("****************************************");
+        set_coefficients(0.5, 0.0, 0.0, 0.0, 0.0);
+        send_impulse(1.0, 50);
+        send_dc(0.5, 100);
         
-        // Test 3: Cutoff frequency
-        send_sine_wave(500.0, 0.5, 500);  // 500 Hz (cutoff)
+        //========================================
+        // TEST 3: Simple 2-tap FIR (Moving Average)
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 3: 2-tap FIR Moving Average");
+        $display("Expected: Output = 0.5*x[n] + 0.5*x[n-1]");
+        $display("****************************************");
+        set_coefficients(0.5, 0.5, 0.0, 0.0, 0.0);
+        send_impulse(1.0, 50);
+        send_dc(1.0, 100);
         
-        // Test 4: High frequency sine (should be attenuated)
-        send_sine_wave(2000.0, 0.5, 500);  // 2 kHz
+        //========================================
+        // TEST 4: All b coefficients
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 4: All b coefficients (FIR)");
+        $display("Expected: Output = 0.25*x[n] + 0.5*x[n-1] + 0.25*x[n-2]");
+        $display("****************************************");
+        set_coefficients(0.25, 0.5, 0.25, 0.0, 0.0);
+        send_impulse(1.0, 50);
+        send_dc(1.0, 100);
         
-        // Test 5: Very high frequency (should be heavily attenuated)
-        send_sine_wave(5000.0, 0.5, 500);  // 5 kHz
+        //========================================
+        // TEST 5: Simple IIR with feedback
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 5: Simple IIR with single feedback");
+        $display("Expected: Output = 0.5*x[n] + 0.5*y[n-1]");
+        $display("****************************************");
+        set_coefficients(0.5, 0.0, 0.0, 0.5, 0.0);
+        send_impulse(1.0, 100);
+        send_dc(1.0, 100);
         
-        // Test 6: DC offset test
-        send_dc(0.25, 300);
+        //========================================
+        // TEST 6: Actual Low-Pass Filter
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 6: Actual Low-Pass Filter (500 Hz)");
+        $display("****************************************");
+        // Low-pass filter coefficients (from your original)
+        b0 = 16'sh0147;  // ~0.020
+        b1 = 16'sh028E;  // ~0.040
+        b2 = 16'sh0147;  // ~0.020
+        a1 = 16'sh6A3D;  // ~1.659
+        a2 = 16'shD89F;  // ~-0.618
+        $display("Using actual filter coefficients");
         
-        // Test 7: Mixed frequency test
-        $display("\n=== Sending mixed frequency signal ===");
-        for (int i = 0; i < 1000; i++) begin
-            @(posedge l_r_clk);
-            time_sec = real'(i) / SAMPLE_RATE;
-            // Mix 100 Hz + 3000 Hz
-            sample_value = 0.3 * $sin(2.0 * 3.14159265359 * 100.0 * time_sec) +
-                          0.3 * $sin(2.0 * 3.14159265359 * 3000.0 * time_sec);
-            audio_in = real_to_q2_14(sample_value);
-            
-            if (i % 100 == 0) begin
-                $display("Sample %0d: Input=%0.4f, Output=%0.4f", 
-                         i, q2_14_to_real(audio_in), q2_14_to_real(audio_out));
-            end
-        end
+        send_impulse(1.0, 100);
+        send_sine_wave(100.0, 0.5, 300);   // Should pass
+        send_sine_wave(2000.0, 0.5, 300);  // Should attenuate
         
         // Finish
         repeat(100) @(posedge l_r_clk);
-        $display("\n=== Test Complete ===");
+        $display("\n=== All Tests Complete ===");
         $finish;
     end
     
     // Timeout watchdog
     initial begin
-        #50_000_000;  // 50 ms timeout
+        #100_000_000;  // 100 ms timeout
         $display("ERROR: Test timeout!");
         $finish;
     end
