@@ -1,33 +1,33 @@
 `timescale 1ns/1ps
 
 module simple_mac_test;
-    reg clk;
-    reg rst;
-    reg [15:0] a, b, c, d;
-    wire [31:0] o;
-    wire co, accumco, signextout;
-    
+    logic signed [15:0] a, b, c, d;
+    logic signed [31:0] o;
+    logic co, accumco, signextout;
+    logic clk;
+    logic rst;
+
     // Clock generation
     initial begin
         clk = 0;
         forever #5 clk = ~clk;
     end
-    
+
     // Reset generation
     initial begin
         rst = 1;
         #25 rst = 0;
     end
-    
+
     // Simple instantiation of MAC16
     MAC16 #(
-        .A_SIGNED("1"),        // ← Changed from "0b1" to "1"
-        .B_SIGNED("1"),        // ← Changed from "0b1" to "1"
-        .MODE_8x8("0"),        // ← Changed from "0b0" to "0"
-        .A_REG("1"),           // ← Changed from "0b1" to "1"
-        .B_REG("1"),           // ← Changed from "0b1" to "1"
-        .C_REG("1"),           // ← Changed from "0b1" to "1"
-        .D_REG("0")            // ← Changed from "0b0" to "0"
+        .A_SIGNED("1"),
+        .B_SIGNED("1"),
+        .MODE_8x8("0"),      // 16x16 mode
+        .A_REG("1"),         // Enable input register
+        .B_REG("1"),         // Enable input register
+        .C_REG("1"),         // Enable input register
+        .D_REG("0")
     ) dut (
         .CLK(clk),
         .CE(~rst),  // Don't enable until after reset
@@ -64,41 +64,56 @@ module simple_mac_test;
         .O3(o[3]), .O2(o[2]), .O1(o[1]), .O0(o[0]),
         .CO(co), .ACCUMCO(accumco), .SIGNEXTOUT(signextout)
     );
-    
+
     initial begin
         $display("Simple MAC16 Test with Reset");
         a = 0; b = 0; c = 0; d = 0;
         
         // Wait for reset to complete
         wait(rst == 0);
-        
         repeat(5) @(posedge clk);
         
         // Test: 5 * 3 + 10 = 25
         @(posedge clk);
-        a = 16'd5;
-        b = 16'd3;
-        c = 16'd10;
-        repeat(10) @(posedge clk);  // ← Increase delay to account for pipeline
+        a = 16'sd5;
+        b = 16'sd3;
+        c = 16'sd10;
+        
+        repeat(10) @(posedge clk);  // Increase delay to account for pipeline
         $display("Time=%0t: A=%0d, B=%0d, C=%0d => O=%0d (hex=0x%h)", 
-            $time, $signed(a), $signed(b), $signed(c), $signed(o), o);
+                 $time, a, b, c, o, o);
         
         repeat(5) @(posedge clk);
-        
         $display("Time=%0t: A=%0d, B=%0d, C=%0d => O=%0d (hex=0x%h)", 
-                 $time, $signed(a), $signed(b), $signed(c), $signed(o), o);
+                 $time, a, b, c, o, o);
         
         if (o === 32'bx) begin
             $display("ERROR: Output is still X!");
             $display("The precompiled MAC16_SIM library may have issues");
             $display("Check Lattice documentation for simulation models");
-        end else if (o == 32'd25) begin
+        end else if (o == 32'sd25) begin
             $display("PASS!");
         end else begin
-            $display("FAIL: Expected 25, got %0d", $signed(o));
+            $display("FAIL: Expected 25, got %0d", o);
+        end
+        
+        // Test with negative numbers: (-5) * 3 + 10 = -5
+        @(posedge clk);
+        a = -16'sd5;
+        b = 16'sd3;
+        c = 16'sd10;
+        
+        repeat(10) @(posedge clk);
+        $display("Time=%0t: A=%0d, B=%0d, C=%0d => O=%0d (hex=0x%h)", 
+                 $time, a, b, c, o, o);
+        
+        if (o == -32'sd5) begin
+            $display("PASS! (negative test)");
+        end else begin
+            $display("FAIL: Expected -5, got %0d", o);
         end
         
         $finish;
     end
-    
+
 endmodule
