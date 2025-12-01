@@ -66,7 +66,7 @@ three_band_eq filter(
     .l_r_clk(i2s_ws_o), // check this is actually l_r_clk
     .reset(reset),
     .audio_in(latch_data[23:8]),
-    .audio_out(audio_out),
+    .audio_out(audio_out)
 );
 
 lscc_i2s_codec #(
