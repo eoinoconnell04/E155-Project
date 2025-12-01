@@ -21,7 +21,27 @@ module three_band_eq(
     logic signed [15:0] low_band_out;
     logic signed [15:0] mid_band_out;
     logic signed [15:0] high_band_out;
+
+    // UNITY GAIN COEFFICIENTS (for testing - pass-through)
+    localparam logic signed [15:0] LOW_B0 = 16'sh4000;  // 1.0 in Q2.14
+    localparam logic signed [15:0] LOW_B1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] LOW_B2 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] LOW_A1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] LOW_A2 = 16'sh0000;  // 0.0 in Q2.14
     
+    localparam logic signed [15:0] MID_B0 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] MID_B1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] MID_B2 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] MID_A1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] MID_A2 = 16'sh0000;  // 0.0 in Q2.14
+    
+    localparam logic signed [15:0] HIGH_B0 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] HIGH_B1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] HIGH_B2 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] HIGH_A1 = 16'sh0000;  // 0.0 in Q2.14
+    localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0 in Q2.14
+    
+    /*
     // Low-pass filter coefficients (500Hz cutoff, Fs=48kHz, Q=0.707 Butterworth)
     localparam logic signed [15:0] LOW_B0 = 16'sh0147;  // ~0.020 in Q2.14
     localparam logic signed [15:0] LOW_B1 = 16'sh028E;  // ~0.040 in Q2.14
@@ -42,6 +62,7 @@ module three_band_eq(
     localparam logic signed [15:0] HIGH_B2 = 16'sh2E8B;  // ~0.728 in Q2.14
     localparam logic signed [15:0] HIGH_A1 = 16'shA5C3;  // ~-1.407 in Q2.14
     localparam logic signed [15:0] HIGH_A2 = 16'sh1F5C;  // ~0.490 in Q2.14
+    */
     
     // Instantiate low-pass filter (processes bass frequencies)
     iir_time_mux_accum low_band_filter (
