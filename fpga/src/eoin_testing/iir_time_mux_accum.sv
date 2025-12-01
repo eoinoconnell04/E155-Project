@@ -15,16 +15,17 @@ module iir_time_mux_accum(
     output logic signed [15:0] filtered_output  // y[n]
 );
 
-    // FSM States
-    typedef enum logic [2:0] {
-        IDLE      = 3'd0,
-        WAIT1     = 3'd1,
-        WAIT2     = 3'd2,
-        MULT_B0   = 3'd3,
-        MULT_B1   = 3'd4,
-        MULT_B2   = 3'd5,
-        MULT_A1   = 3'd6,
-        MULT_A2   = 3'd7
+    // FSM States - expanded to 4 bits to add DONE state
+    typedef enum logic [3:0] {
+        IDLE      = 4'd0,
+        WAIT1     = 4'd1,
+        WAIT2     = 4'd2,
+        MULT_B0   = 4'd3,
+        MULT_B1   = 4'd4,
+        MULT_B2   = 4'd5,
+        MULT_A1   = 4'd6,
+        MULT_A2   = 4'd7,
+        DONE      = 4'd8
     } state_t;
     
     state_t state, next_state;
@@ -83,9 +84,7 @@ module iir_time_mux_accum(
     logic mac_rst;    // Reset accumulator
     logic mac_ce;     // Clock enable for MAC
     
-    // MAC reset control: reset accumulator at start of new calculation
-    //assign mac_rst = !reset || (state == IDLE) || (state == WAIT1) || (state == WAIT2);
-    // Reset MAC only when truly idle (before new sample starts)
+    // MAC reset control: reset accumulator only when truly idle
     assign mac_rst = !reset || (state == IDLE && !l_r_edge);
     
     // MAC clock enable: enable during multiply states
@@ -165,6 +164,10 @@ module iir_time_mux_accum(
             end
             
             MULT_A2: begin
+                next_state = DONE;  // Added DONE state for pipeline delay
+            end
+            
+            DONE: begin
                 next_state = IDLE;
             end
             
@@ -174,15 +177,15 @@ module iir_time_mux_accum(
     
     // Output logic - extract Q2.14 result from Q4.28 accumulator
     // mac_result[31:0] contains accumulated (a*b) where a,b are Q2.14, so product is Q4.28
-    // To get Q2.14 output, take bits [29:14] with rounding
+    // Sample result in DONE state (after pipeline completes)
     always_ff @(posedge clk) begin
         if (!reset) begin
             filtered_output <= 16'd0;
             output_ready <= 1'b0;
-        end else if (state == MULT_A2) begin
+        end else if (state == DONE) begin
             // Round and truncate from Q4.28 to Q2.14
             // Add 0.5 LSB for rounding: add bit[13] to position 14
-            filtered_output <= mac_result[27:12] + mac_result[11];
+            filtered_output <= mac_result[29:14] + mac_result[13];
             output_ready <= 1'b1;
         end else begin
             output_ready <= 1'b0;
