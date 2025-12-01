@@ -183,9 +183,8 @@ module iir_time_mux_accum(
             filtered_output <= 16'd0;
             output_ready <= 1'b0;
         end else if (state == DONE) begin
-            // Round and truncate from Q4.28 to Q2.14
-            // Add 0.5 LSB for rounding: add bit[13] to position 14
-            filtered_output <= mac_result[29:14] + mac_result[13];
+            // truncate from Q4.28 to Q2.14
+            filtered_output <= mac_result[29:14];
             output_ready <= 1'b1;
         end else begin
             output_ready <= 1'b0;

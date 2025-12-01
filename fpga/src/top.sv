@@ -59,7 +59,21 @@ assign adc_test = adc_valid;
 
 //assign dac_data = counter;
 //assign adc_i2s_value = i2s_sd_i;
+logic [15:0] audio_out;
+assign dac_data = {8'b0, audio_out, 8'b0};
+three_band_eq filter(
+    .clk(clk),
+    .l_r_clk(i2s_ws_o), // check this is actually l_r_clk
+    .reset(reset),
+    .audio_in(latch_data[23:8]),
+    .audio_out(audio_out),
+);
 
+clk,         // High speed system clock
+    input  logic        l_r_clk,     // Left right select (new sample on every edge)
+    input  logic        reset,
+    input  logic signed [15:0] audio_in,      // Input audio sample
+    output logic signed [15:0] audio_out  
 
 lscc_i2s_codec #(
     .DATA_WIDTH       (24),
