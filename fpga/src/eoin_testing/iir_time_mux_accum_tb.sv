@@ -59,10 +59,12 @@ module iir_time_mux_accum_tb;
     // Function to convert real to Q2.14 fixed point
     function signed [15:0] real_to_q2_14(real value);
         real scaled;
+        integer temp;
         scaled = value * (2.0 ** 14.0);  // Scale by 2^14
         if (scaled > 32767.0) scaled = 32767.0;
         if (scaled < -32768.0) scaled = -32768.0;
-        return signed'(16'(scaled));
+        temp = integer'(scaled);  // Convert to integer first
+        return temp[15:0];        // Then extract 16 bits
     endfunction
     
     // Function to convert Q2.14 to real
