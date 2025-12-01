@@ -1,6 +1,6 @@
 module MAC16_wrapper_accum_4bit_scaled (
     input logic clk,
-    input logic rst_n,                    // Active-low reset
+    input logic rst,                    // Active-low reset
     input logic ce,                       // Clock enable
     input logic signed [15:0] a_in,       // Signed 16-bit input A (only top 4 bits used)
     input logic signed [15:0] b_in,       // Signed 16-bit input B (only top 4 bits used)
@@ -21,7 +21,7 @@ module MAC16_wrapper_accum_4bit_scaled (
     
     // Register inputs
     always_ff @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst) begin
             a_reg <= 4'd0;
             b_reg <= 4'd0;
             ce_reg <= 1'b0;
@@ -34,7 +34,7 @@ module MAC16_wrapper_accum_4bit_scaled (
     
     // MAC operation
     always_ff @(posedge clk) begin
-        if (!rst_n) begin
+        if (!rst) begin
             accumulator_small <= 12'd0;
         end else if (ce_reg) begin
             accumulator_small <= (a_reg * b_reg) + accumulator_small;
