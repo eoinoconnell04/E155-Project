@@ -59,9 +59,10 @@ module MAC16_wrapper_accum_sim_tb;
             // Wait for pipeline (2 cycles)
             @(posedge clk);
             @(posedge clk);
+            #1;  // ← Add small delay to sample AFTER the clock edge updates the register
             
             $display("%s: a=%0.4f, b=%0.4f, result=%0.4f (0x%h)", 
-                     description, a_val, b_val, q4_28_to_real(result), result);
+                    description, a_val, b_val, q4_28_to_real(result), result);
         end
     endtask
     
