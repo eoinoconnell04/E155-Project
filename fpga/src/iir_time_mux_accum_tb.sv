@@ -268,11 +268,11 @@ module iir_time_mux_accum_tb;
             $display("  [DEBUG] State=%s, mac_a=%h, mac_b=%h, mac_result=%h (%d)", 
                     dut.state.name(), dut.mac_a, dut.mac_b, dut.mac_result, $signed(dut.mac_result));
         end*/
-        if (dut.state != dut.IDLE) begin
+        /*if (dut.state != dut.IDLE) begin
             $display("[DEBUG] State=%s, mac_a=%h, mac_b=%h, mac_result=%h (%d), mac_rst=%b, mac_ce=%b", 
                 dut.state.name(), dut.mac_a, dut.mac_b, dut.mac_result, 
                 $signed(dut.mac_result), dut.mac_rst, dut.mac_ce);
-        end
+        end*/
 
     end
 
