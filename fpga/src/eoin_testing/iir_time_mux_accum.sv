@@ -33,7 +33,7 @@ module iir_time_mux_accum(
     logic l_r_clk_d1, l_r_clk_d2;
     logic l_r_edge;
     
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk) begin
         if (!reset) begin
             l_r_clk_d1 <= 1'b0;
             l_r_clk_d2 <= 1'b0;
@@ -48,7 +48,7 @@ module iir_time_mux_accum(
     // Sample shift registers (x[n], x[n-1], x[n-2])
     logic signed [15:0] x_n, x_n1, x_n2;
     
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk) begin
         if (!reset) begin
             x_n  <= 16'd0;
             x_n1 <= 16'd0;
@@ -64,7 +64,7 @@ module iir_time_mux_accum(
     logic signed [15:0] y_n1, y_n2;
     logic output_ready;
     
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk) begin
         if (!reset) begin
             y_n1 <= 16'd0;
             y_n2 <= 16'd0;
@@ -121,7 +121,7 @@ module iir_time_mux_accum(
     end
     
     // FSM state register
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk) begin
         if (!reset)
             state <= IDLE;
         else
@@ -173,7 +173,7 @@ module iir_time_mux_accum(
     // Output logic - extract Q2.14 result from Q4.28 accumulator
     // mac_result[31:0] contains accumulated (a*b) where a,b are Q2.14, so product is Q4.28
     // To get Q2.14 output, take bits [29:14] with rounding
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk) begin
         if (!reset) begin
             filtered_output <= 16'd0;
             output_ready <= 1'b0;

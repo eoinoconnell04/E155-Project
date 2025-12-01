@@ -22,10 +22,10 @@ module MAC16_wrapper_accum (
     logic bhold = 1'b0;
     logic chold = 1'b0;
     logic dhold = 1'b0;
-    logic irsttop = rst;      // Reset tied to input reset
-    logic irstbot = rst;
-    logic orsttop = rst;      // Output reset tied to input reset
-    logic orstbot = rst;
+    logic irsttop = !rst;      // Reset tied to input reset
+    logic irstbot = !rst;
+    logic orsttop = !rst;      // Output reset tied to input reset
+    logic orstbot = !rst;
     logic oloadtop = 1'b0;    // Not loading external accumulator value
     logic oloadbot = 1'b0;
     logic addsubtop = 1'b0;   // 0 = add (for accumulation)
@@ -42,7 +42,7 @@ module MAC16_wrapper_accum (
     
     // Register inputs on clock edge
     always_ff @(posedge clk) begin
-        if (rst) begin
+        if (!rst) begin
             ce_reg <= 1'b0;
             a_reg <= 16'h0000;
             b_reg <= 16'h0000;
