@@ -62,7 +62,7 @@ assign adc_test = adc_valid;
 logic [15:0] audio_out;
 assign dac_data = {8'b0, audio_out, 8'b0};
 three_band_eq filter(
-    .clk(clk),
+    .clk(lmmi_clk_i),
     .l_r_clk(i2s_ws_o), // check this is actually l_r_clk
     .reset(reset),
     .audio_in(latch_data[23:8]),
