@@ -57,9 +57,10 @@ module MAC16_wrapper_accum_sim_tb;
             ce = 1'b1;
             
             @(posedge clk);
-            ce = 1'b0;  // ← Turn OFF CE after one cycle!
+            // Keep CE high! Don't turn it off yet!
             
             @(posedge clk);
+            ce = 1'b0;  // ← Turn OFF CE AFTER the result is computed
             #1;
             
             $display("%s: a=%0.4f, b=%0.4f, result=%0.4f (0x%h)", 
