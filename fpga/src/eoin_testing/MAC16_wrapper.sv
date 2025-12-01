@@ -45,24 +45,6 @@ module MAC16_wrapper (
     end
     
     MAC16 #(
-        .NEG_TRIGGER("0b0"),
-        .A_REG("0b0"),      // DISABLE - we're registering externally
-        .B_REG("0b0"),      // DISABLE - we're registering externally
-        .C_REG("0b0"),      // DISABLE - we're registering externally
-        .D_REG("0b0"),
-        .TOP_8x8_MULT_REG("0b0"),
-        .BOT_8x8_MULT_REG("0b0"),
-        .PIPELINE_16x16_MULT_REG1("0b0"),
-        .PIPELINE_16x16_MULT_REG2("0b0"),
-        .TOPOUTPUT_SELECT("0b00"),
-        .TOPADDSUB_LOWERINPUT("0b00"),
-        .TOPADDSUB_UPPERINPUT("0b0"),
-        .TOPADDSUB_CARRYSELECT("0b00"),
-        .BOTOUTPUT_SELECT("0b00"),
-        .BOTADDSUB_LOWERINPUT("0b00"),
-        .BOTADDSUB_UPPERINPUT("0b0"),
-        .BOTADDSUB_CARRYSELECT("0b00"),
-        .MODE_8x8("0b0"),   // Set to 1 for power save (no pipeline regs used)
         .A_SIGNED("0b1"),   // SIGNED mode for A
         .B_SIGNED("0b1")    // SIGNED mode for B
     ) mac_inst (
