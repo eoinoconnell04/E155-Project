@@ -83,6 +83,11 @@ module MAC16_wrapper_accum_sim_tb;
     
     // Main test sequence
     initial begin
+        // Declare all variables at the top of the initial block
+        automatic real b0_val, b1_val, b2_val, a1_val, a2_val;
+        automatic real x_n_val, x_n1_val, x_n2_val, y_n1_val, y_n2_val;
+        automatic real expected_val;
+        
         $display("=== MAC16 Wrapper Accumulator Testbench ===");
         $display("Clock Period: %0.1f ns", CLK_PERIOD);
         $display("Testing Q2.14 fixed-point arithmetic\n");
@@ -220,24 +225,24 @@ module MAC16_wrapper_accum_sim_tb;
         $display("****************************************");
         
         // Example coefficients (simplified)
-        real b0 = 0.5, b1 = 0.3, b2 = 0.2;
-        real a1 = 0.4, a2 = 0.1;
-        real x_n = 1.0, x_n1 = 0.5, x_n2 = 0.2;
-        real y_n1 = 0.3, y_n2 = 0.1;
+        b0_val = 0.5; b1_val = 0.3; b2_val = 0.2;
+        a1_val = 0.4; a2_val = 0.1;
+        x_n_val = 1.0; x_n1_val = 0.5; x_n2_val = 0.2;
+        y_n1_val = 0.3; y_n2_val = 0.1;
         
         $display("Coefficients: b0=%0.2f, b1=%0.2f, b2=%0.2f, a1=%0.2f, a2=%0.2f", 
-                 b0, b1, b2, a1, a2);
-        $display("Inputs: x[n]=%0.2f, x[n-1]=%0.2f, x[n-2]=%0.2f", x_n, x_n1, x_n2);
-        $display("Previous outputs: y[n-1]=%0.2f, y[n-2]=%0.2f", y_n1, y_n2);
+                 b0_val, b1_val, b2_val, a1_val, a2_val);
+        $display("Inputs: x[n]=%0.2f, x[n-1]=%0.2f, x[n-2]=%0.2f", x_n_val, x_n1_val, x_n2_val);
+        $display("Previous outputs: y[n-1]=%0.2f, y[n-2]=%0.2f", y_n1_val, y_n2_val);
         
-        mac_operation(b0, x_n, "b0 * x[n]");
-        mac_operation(b1, x_n1, "b1 * x[n-1] + acc");
-        mac_operation(b2, x_n2, "b2 * x[n-2] + acc");
-        mac_operation(-a1, y_n1, "-a1 * y[n-1] + acc");
-        mac_operation(-a2, y_n2, "-a2 * y[n-2] + acc");
+        mac_operation(b0_val, x_n_val, "b0 * x[n]");
+        mac_operation(b1_val, x_n1_val, "b1 * x[n-1] + acc");
+        mac_operation(b2_val, x_n2_val, "b2 * x[n-2] + acc");
+        mac_operation(-a1_val, y_n1_val, "-a1 * y[n-1] + acc");
+        mac_operation(-a2_val, y_n2_val, "-a2 * y[n-2] + acc");
         
-        real expected = b0*x_n + b1*x_n1 + b2*x_n2 - a1*y_n1 - a2*y_n2;
-        $display("Expected result: %0.4f", expected);
+        expected_val = b0_val*x_n_val + b1_val*x_n1_val + b2_val*x_n2_val - a1_val*y_n1_val - a2_val*y_n2_val;
+        $display("Expected result: %0.4f", expected_val);
         
         //========================================
         // TEST 9: Reset During Operation
