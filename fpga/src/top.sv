@@ -57,12 +57,12 @@ assign s_proc = s_adc >>> 3;          // arithmetic divide by two
 //assign dac_data = latch_data; 
 assign adc_test = adc_valid;
 
-assign dac_data = {8'b0, latch_data[23:8], 8'b0};
+//assign dac_data = {8'b0, latch_data[23:8], 8'b0};
 
 //assign dac_data = counter;
 //assign adc_i2s_value = i2s_sd_i;
 logic [15:0] audio_out;
-//assign dac_data = {8'b0, audio_out, 8'b0};
+assign dac_data = {8'b0, audio_out, 8'b0};
 three_band_eq filter(
     .clk(lmmi_clk_i),
     .l_r_clk(i2s_ws_o), // check this is actually l_r_clk
