@@ -44,7 +44,7 @@ module three_band_eq(
     localparam logic signed [15:0] HIGH_A2 = 16'sh1F5C;  // ~0.490 in Q2.14
     
     // Instantiate low-pass filter (processes bass frequencies)
-    iir_time_mux low_band_filter (
+    iir_time_mux_accum low_band_filter (
         .clk(clk),
         .l_r_clk(l_r_clk),
         .reset(reset),
@@ -58,7 +58,7 @@ module three_band_eq(
     );
     
     // Instantiate band-pass filter (processes midrange frequencies)
-    iir_time_mux mid_band_filter (
+    iir_time_mux_accum mid_band_filter (
         .clk(clk),
         .l_r_clk(l_r_clk),
         .reset(reset),
@@ -72,7 +72,7 @@ module three_band_eq(
     );
     
     // Instantiate high-pass filter (processes treble frequencies)
-    iir_time_mux high_band_filter (
+    iir_time_mux_accum high_band_filter (
         .clk(clk),
         .l_r_clk(l_r_clk),
         .reset(reset),
