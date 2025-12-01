@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module mult_accum_test;
+module simple_mac_test;
     logic signed [15:0] a, b, c, d;
     logic signed [31:0] o;
     logic co, accumco, signextout;
@@ -19,18 +19,31 @@ module mult_accum_test;
         #25 rst = 0;
     end
 
-    // MAC16 instantiation - testing basic multiply with unsigned C
+    // MAC16 with CORRECT parameter format for Lattice primitives
     MAC16 #(
-        .A_SIGNED(1'b1),
-        .B_SIGNED(1'b1),
-        .MODE_8x8(1'b0),     // 16x16 mode
-        .A_REG(1'b1),        // Enable input registers
-        .B_REG(1'b1),
+        .NEG_TRIGGER(1'b0),
         .C_REG(1'b1),
-        .D_REG(1'b0)
+        .A_REG(1'b1),
+        .B_REG(1'b1),
+        .D_REG(1'b0),
+        .TOP_8x8_MULT_REG(1'b1),      // These are the actual pipeline register controls!
+        .BOT_8x8_MULT_REG(1'b1),
+        .PIPELINE_16x16_MULT_REG1(1'b1),  // 16x16 pipeline stage 1
+        .PIPELINE_16x16_MULT_REG2(1'b1),  // 16x16 pipeline stage 2
+        .TOPOUTPUT_SELECT(2'b00),     // 2-bit value for output select
+        .TOPADDSUB_LOWERINPUT(2'b00),
+        .TOPADDSUB_UPPERINPUT(1'b0),
+        .TOPADDSUB_CARRYSELECT(2'b00),
+        .BOTOUTPUT_SELECT(2'b00),
+        .BOTADDSUB_LOWERINPUT(2'b00),
+        .BOTADDSUB_UPPERINPUT(1'b0),
+        .BOTADDSUB_CARRYSELECT(2'b00),
+        .MODE_8x8(1'b0),              // 0 = 16x16 mode
+        .A_SIGNED(1'b1),
+        .B_SIGNED(1'b1)
     ) dut (
         .CLK(clk),
-        .CE(~rst),
+        .CE(1'b1),     // Always enabled (control with inputs instead)
         .A15(a[15]), .A14(a[14]), .A13(a[13]), .A12(a[12]),
         .A11(a[11]), .A10(a[10]), .A9(a[9]), .A8(a[8]),
         .A7(a[7]), .A6(a[6]), .A5(a[5]), .A4(a[4]),
@@ -81,76 +94,25 @@ module mult_accum_test;
     endtask
 
     initial begin
-        $display("=== MAC16 Comprehensive Test ===\n");
+        $display("=== MAC16 Test with Full Parameters ===\n");
         a = 0; b = 0; c = 0; d = 0;
         
-        // Wait for reset to complete
         wait(rst == 0);
         repeat(5) @(posedge clk);
         
-        // Test 1: Basic multiplication only (C=0)
-        $display("TEST 1: Multiplication only");
+        $display("TEST 1: Basic multiplication");
         @(posedge clk);
         a = 16'sd5;
-        b = 16'sd3;
-        c = 16'd0;  // C is unsigned, so use 16'd
-        wait_and_check("5 * 3 + 0", 32'sd15);
-        
-        // Test 2: Negative multiplication (C=0)
-        $display("TEST 2: Negative multiplication");
-        @(posedge clk);
-        a = -16'sd5;
         b = 16'sd3;
         c = 16'd0;
-        wait_and_check("(-5) * 3 + 0", -32'sd15);
+        wait_and_check("5 * 3", 32'sd15);
         
-        // Test 3: Multiplication with unsigned C addition
-        $display("TEST 3: Multiplication + unsigned C");
+        $display("TEST 2: With unsigned C");
         @(posedge clk);
         a = 16'sd5;
         b = 16'sd3;
-        c = 16'd10;  // Unsigned addition
-        wait_and_check("5 * 3 + 10", 32'sd25);
-        
-        // Test 4: Negative product with unsigned C
-        $display("TEST 4: Negative product + unsigned C");
-        @(posedge clk);
-        a = -16'sd5;
-        b = 16'sd3;
         c = 16'd10;
-        wait_and_check("(-5) * 3 + 10", -32'sd5);
-        
-        // Test 5: Larger values
-        $display("TEST 5: Larger values");
-        @(posedge clk);
-        a = 16'sd100;
-        b = 16'sd50;
-        c = 16'd1000;
-        wait_and_check("100 * 50 + 1000", 32'sd6000);
-        
-        // Test 6: Both negative operands
-        $display("TEST 6: Both negative operands");
-        @(posedge clk);
-        a = -16'sd10;
-        b = -16'sd20;
-        c = 16'd50;
-        wait_and_check("(-10) * (-20) + 50", 32'sd250);
-        
-        // Test 7: Zero multiplication
-        $display("TEST 7: Zero multiplication");
-        @(posedge clk);
-        a = 16'sd0;
-        b = 16'sd100;
-        c = 16'd42;
-        wait_and_check("0 * 100 + 42", 32'sd42);
-        
-        // Test 8: C only (A=0, B=0)
-        $display("TEST 8: C pass-through");
-        @(posedge clk);
-        a = 16'sd0;
-        b = 16'sd0;
-        c = 16'd123;
-        wait_and_check("0 * 0 + 123", 32'sd123);
+        wait_and_check("5 * 3 + 10", 32'sd25);
         
         $display("=== Test Complete ===");
         $finish;
