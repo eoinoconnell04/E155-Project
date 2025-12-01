@@ -85,7 +85,8 @@ module iir_time_mux_accum(
     logic mac_ce;     // Clock enable for MAC
     
     // MAC reset control: reset accumulator only when truly idle
-    assign mac_rst = !reset || (state == IDLE && !l_r_edge);
+    //assign mac_rst = !reset || (state == IDLE && !l_r_edge);
+    assign mac_rst = reset && !(state == IDLE);
     
     // MAC clock enable: enable during multiply states
     assign mac_ce = (state == MULT_B0) || (state == MULT_B1) || (state == MULT_B2) || 
