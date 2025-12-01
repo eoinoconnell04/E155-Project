@@ -31,7 +31,7 @@ module MAC16_wrapper_accum_sim (
     always_ff @(posedge clk) begin
         if (rst) begin
             accumulator <= 32'd0;
-        end else if (ce_reg) begin
+        end else if (ce) begin
             // Multiply and accumulate
             accumulator <= (a_reg * b_reg) + accumulator;
         end
