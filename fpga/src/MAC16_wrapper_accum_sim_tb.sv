@@ -4,7 +4,8 @@ module MAC16_wrapper_accum_sim_tb;
 
     // Testbench signals
     logic clk;
-    logic rst;
+    logic reset;      // System reset (active LOW)
+    logic mac_rst;    // MAC accumulator reset (active LOW)
     logic ce;
     logic signed [15:0] a_in;
     logic signed [15:0] b_in;
@@ -20,7 +21,8 @@ module MAC16_wrapper_accum_sim_tb;
     // DUT instantiation
     MAC16_wrapper_accum_sim dut (
         .clk(clk),
-        .rst(rst),
+        .reset(reset),      // System reset
+        .mac_rst(mac_rst),  // Accumulator reset
         .ce(ce),
         .a_in(a_in),
         .b_in(b_in),
@@ -57,10 +59,10 @@ module MAC16_wrapper_accum_sim_tb;
             ce = 1'b1;
             
             @(posedge clk);
-            // Keep CE high! Don't turn it off yet!
+            // Keep CE high for the computation cycle
             
             @(posedge clk);
-            ce = 1'b0;  // ← Turn OFF CE AFTER the result is computed
+            ce = 1'b0;
             #1;
             
             $display("%s: a=%0.4f, b=%0.4f, result=%0.4f (0x%h)", 
@@ -68,18 +70,20 @@ module MAC16_wrapper_accum_sim_tb;
         end
     endtask
     
-    // Task to reset the MAC
+    // Task to reset the MAC accumulator only
     task reset_mac();
         begin
-            $display("\n--- Resetting MAC ---");
+            $display("\n--- Resetting MAC Accumulator ---");
             @(posedge clk);
-            rst = 1'b1;
+            mac_rst = 1'b0;  // Assert reset (active LOW)
             ce = 1'b0;
             a_in = 16'd0;
             b_in = 16'd0;
             @(posedge clk);
             @(posedge clk);
-            rst = 1'b0;
+            mac_rst = 1'b1;  // Deassert reset
+            @(posedge clk);
+            #1;
             $display("Result after reset: %0d (0x%h)\n", result, result);
         end
     endtask
@@ -95,15 +99,17 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Clock Period: %0.1f ns", CLK_PERIOD);
         $display("Testing Q2.14 fixed-point arithmetic\n");
         
-        // Initialize
-        rst = 1'b1;
+        // Initialize - both resets asserted (active LOW)
+        reset = 1'b0;     // System reset asserted
+        mac_rst = 1'b0;   // MAC reset asserted
         ce = 1'b0;
         a_in = 16'd0;
         b_in = 16'd0;
         
-        // Wait and release reset
+        // Wait and release resets
         repeat(5) @(posedge clk);
-        rst = 1'b0;
+        reset = 1'b1;     // Release system reset
+        mac_rst = 1'b1;   // Release MAC reset
         repeat(2) @(posedge clk);
         
         //========================================
@@ -115,8 +121,11 @@ module MAC16_wrapper_accum_sim_tb;
         $display("****************************************");
         
         mac_operation(1.0, 1.0, "1.0 * 1.0");
+        reset_mac();
         mac_operation(2.0, 3.0, "2.0 * 3.0");
+        reset_mac();
         mac_operation(0.5, 0.5, "0.5 * 0.5");
+        reset_mac();
         mac_operation(-1.0, 1.0, "-1.0 * 1.0");
         
         //========================================
@@ -190,6 +199,7 @@ module MAC16_wrapper_accum_sim_tb;
         a_in = real_to_q2_14(5.0);
         b_in = real_to_q2_14(5.0);
         repeat(3) @(posedge clk);
+        #1;
         $display("CE disabled: a=5.0, b=5.0, result=%0.4f (should still be ~1.0)", 
                  q4_28_to_real(result));
         
@@ -216,6 +226,8 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Cycle 1: Inputs registered, result=%0.4f", q4_28_to_real(result));
         
         @(posedge clk);
+        ce = 1'b0;
+        #1;
         $display("Cycle 2: Result available, result=%0.4f (expected ~12.0)", q4_28_to_real(result));
         
         //========================================
@@ -248,21 +260,23 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Expected result: %0.4f", expected_val);
         
         //========================================
-        // TEST 9: Reset During Operation
+        // TEST 9: System Reset During Operation
         //========================================
         $display("\n****************************************");
-        $display("TEST 9: Reset During Operation");
+        $display("TEST 9: System Reset During Operation");
         $display("****************************************");
         
         mac_operation(5.0, 5.0, "Start: 5.0 * 5.0");
         
         @(posedge clk);
-        rst = 1'b1;
-        $display("Reset asserted mid-operation");
+        reset = 1'b0;  // Assert system reset (active LOW)
+        $display("System reset asserted");
         @(posedge clk);
-        rst = 1'b0;
         @(posedge clk);
-        $display("After reset: result=%0.4f (should be 0.0)", q4_28_to_real(result));
+        reset = 1'b1;  // Deassert system reset
+        @(posedge clk);
+        #1;
+        $display("After system reset: result=%0.4f (should be 0.0)", q4_28_to_real(result));
         
         // Finish
         repeat(10) @(posedge clk);
