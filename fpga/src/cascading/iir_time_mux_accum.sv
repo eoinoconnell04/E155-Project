@@ -5,7 +5,6 @@ Date: Nov. 19, 2025
 Module Function: 16-bit biquad IIR filter with time-multiplexed DSP slice
 Coefficients: Q2.14 format
 Inputs/outputs: 16-bit signed audio samples
-Modified: Added trigger input and output_valid for cascading
 */
 module iir_time_mux_accum(
     input  logic        clk,         // High speed system clock
@@ -14,9 +13,9 @@ module iir_time_mux_accum(
     input  logic signed [15:0] latest_sample,   // x[n]
     input  logic signed [15:0] b0, b1, b2, a1, a2,
     output logic signed [15:0] filtered_output,
-    output logic        output_valid, // Indicates output is ready
-    output logic        test          // Debug output
+    output logic        output_ready // Indicates output is ready
 );
+
 
     // FSM States - expanded to 4 bits to add DONE state
     typedef enum logic [3:0] {
@@ -28,28 +27,29 @@ module iir_time_mux_accum(
         MULT_B2   = 4'd5,
         MULT_A1   = 4'd6,
         MULT_A2   = 4'd7,
-        DONE      = 4'd8
+       DONE      = 4'd8
     } state_t;
     
     state_t state, next_state;
     
-    // Shift into pipeline in WAIT1 state (after trigger settles)
-    logic signed [15:0] x_n, x_n1, x_n2;
-    logic signed [15:0] x_processing;  // Latched sample being processed
 
-    always_ff @(posedge clk) begin
-        if (!reset) begin
-            x_n  <= 16'd0;
-            x_n1 <= 16'd0;
-            x_n2 <= 16'd0;
-            x_processing <= 16'd0;
-        end else if (trigger && state == IDLE) begin
-            x_n  <= latest_sample;
-            x_n1 <= x_n;
-            x_n2 <= x_n1;
-            x_processing <= x_n;  // Latch the sample we're about to process
-        end
+// Shift into pipeline in WAIT1 state (after edge settles)
+logic signed [15:0] x_n, x_n1, x_n2;
+logic signed [15:0] x_processing;  // â† NEW: latched sample being processed
+
+always_ff @(posedge clk) begin
+    if (!reset) begin
+        x_n  <= 16'd0;
+        x_n1 <= 16'd0;
+        x_n2 <= 16'd0;
+        x_processing <= 16'd0;  // â† NEW
+    end else if (trigger) begin
+        x_n  <= latest_sample;
+        x_n1 <= x_n;
+        x_n2 <= x_n1;
+        x_processing <= x_n;  // â† NEW: Latch the sample we're about to process
     end
+end
     
     // Output history
     logic signed [15:0] y_n1, y_n2;
@@ -58,14 +58,14 @@ module iir_time_mux_accum(
         if (!reset) begin
             y_n1 <= 16'd0;
             y_n2 <= 16'd0;
-        end else if (output_valid) begin
+        end else if (output_ready) begin
             y_n1 <= filtered_output;
             y_n2 <= y_n1;
         end
     end
-    
     // DSP slice inputs
-    logic signed [15:0] mac_a;  // Coefficient input
+// Coefficient input
+logic signed [15:0] mac_a;
     logic signed [15:0] mac_b;  // Data input
     logic signed [31:0] mac_result; // MAC result
     
@@ -73,9 +73,10 @@ module iir_time_mux_accum(
     logic mac_rst;    // Reset accumulator
     logic mac_ce;     // Clock enable for MAC
     
-    // MAC reset control: reset accumulator when not processing
-    assign mac_rst = reset && (state != WAIT1) && (state != WAIT2);
-    
+    // MAC reset control: reset accumulator only when truly idle
+    //assign mac_rst = !reset || (state == IDLE && !l_r_edge);
+    //assign mac_rst = reset && !(state == IDLE);
+assign mac_rst = reset && (state != WAIT1) && (state != WAIT2);
     // MAC clock enable: enable during multiply states
     assign mac_ce = (state == MULT_B0) || (state == MULT_B1) || (state == MULT_B2) || 
                     (state == MULT_A1) || (state == MULT_A2);
@@ -164,7 +165,6 @@ module iir_time_mux_accum(
         endcase
     end
     
-    // Latch MAC result when computation is done
     logic signed [31:0] mac_result_latched;
 
     always_ff @(posedge clk) begin
@@ -179,13 +179,13 @@ module iir_time_mux_accum(
     always_ff @(posedge clk) begin
         if (!reset) begin
             filtered_output <= 16'd0;
-            output_valid <= 1'b0;
+            output_ready <= 1'b0;
         end else if (state == DONE) begin  
             // Extract Q2.14 from Q4.28 with rounding
             filtered_output <= mac_result_latched[29:14] + mac_result_latched[13];
-            output_valid <= 1'b1;  // Signal that output is valid
+            output_ready <= 1'b1;
         end else begin
-            output_valid <= 1'b0;
+            output_ready <= 1'b0;
         end
     end
     
@@ -199,7 +199,5 @@ module iir_time_mux_accum(
         .b_in(mac_b), 
         .result(mac_result)
     );
-
-    assign test = mac_rst;
 
 endmodule
