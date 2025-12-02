@@ -209,7 +209,7 @@ module iir_time_mux_accum(
             output_ready <= 1'b0;
         end else if (state == DONE) begin
             // Truncate from Q4.28 to Q2.14
-            filtered_output <= mac_result[29:14];
+            filtered_output <= mac_result[27:12];
             output_ready <= 1'b1;
         end else begin
             output_ready <= 1'b0;
