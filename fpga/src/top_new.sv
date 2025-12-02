@@ -124,6 +124,22 @@ three_band_eq_adjust filter(
     .high_band_out(high_band_out)
 );
 
+ultra_simple_bypass bypass_filter(
+    .clk(lmmi_clk_i),
+    .l_r_clk(i2s_ws_o),
+    .reset(~reset_n_i),  // Note: inverted!
+    .audio_in(latch_data[23:8]),
+    .audio_out(audio_out)
+);
+
+simple_mac_gain_test gain_filter(
+    .clk(lmmi_clk_i),
+    .l_r_clk(i2s_ws_o),
+    .reset(~reset_n_i),  // Note: inverted!
+    .audio_in(latch_data[23:8]),
+    .audio_out(audio_out)
+);
+
 lscc_i2s_codec #(
     .DATA_WIDTH       (24),
     .TRANSCEIVER_MODE (1)         
