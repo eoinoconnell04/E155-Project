@@ -1,11 +1,8 @@
 `timescale 1ns/1ps
 
 module top_tb();
-    // Inputs
     logic reset_n_i;
     logic i2s_sd_i;
-    
-    // Outputs
     logic lmmi_clk_i;
     logic i2s_sd_o;
     logic i2s_sck_o;
@@ -13,15 +10,9 @@ module top_tb();
     logic adc_test;
     logic conf_en_i;
     
-    // Test monitoring variables
     integer sample_count;
-    integer bit_count;
-    integer frame_count;
-    
-    // I2S stimulus generation
-    logic [31:0] test_audio_sample;
-    logic [23:0] left_channel;
-    logic [23:0] right_channel;
+    integer tx_sample_count;
+    integer error_count;
     
     // Instantiate DUT
     top_new dut(
@@ -37,174 +28,194 @@ module top_tb();
     
     initial begin
         $display("=================================================================");
-        $display("Starting top_new Testbench with Realistic I2S Input");
+        $display("Enhanced Testbench - Continuous I2S Stream");
         $display("=================================================================");
         sample_count = 0;
-        bit_count = 0;
-        frame_count = 0;
+        tx_sample_count = 0;
+        error_count = 0;
     end
     
-    // Monitor ADC valid signal with enhanced output
+    // Monitor ADC with detailed analysis
     always @(posedge dut.adc_valid) begin
         sample_count++;
-        $display("\n***** ADC Sample #%0d at %0t ns *****", sample_count, $time);
-        $display("  ADC Data (hex):     0x%08h", dut.adc_data);
-        $display("  ADC Data (signed):  %d", $signed(dut.adc_data));
-        $display("  Latched Data:       0x%08h", dut.latch_data);
-        $display("  s_adc [23:0]:       0x%06h (%d)", dut.s_adc, $signed(dut.s_adc));
-        $display("  s_proc (>>3):       0x%06h (%d)", dut.s_proc, $signed(dut.s_proc));
         
-        // Check if data is non-zero (indicates proper reception)
-        if (dut.adc_data != 32'h0) begin
-            $display("  ✓ NON-ZERO DATA RECEIVED!");
-        end else begin
-            $display("  ⚠ WARNING: Zero data received");
+        if (sample_count <= 5 || dut.adc_data != 32'h0) begin
+            $display("\n***** ADC Sample #%0d at %0t ns *****", sample_count, $time);
+            $display("  Raw ADC Data:       0x%08h (%d)", dut.adc_data, $signed(dut.adc_data));
+            $display("  Latched Data:       0x%08h", dut.latch_data);
+            $display("  s_adc [23:0]:       0x%06h (%d)", dut.s_adc, $signed(dut.s_adc));
+            $display("  s_proc (>>3):       0x%06h (%d)", dut.s_proc, $signed(dut.s_proc));
+            
+            if (dut.adc_data != 32'h0) begin
+                $display("  ✓ NON-ZERO DATA!");
+            end
         end
     end
     
-    // Monitor DAC requests with more detail
+    // Monitor DAC with detailed filter output
     always @(posedge dut.dac_request) begin
-        $display("\n----- DAC Request at %0t ns -----", $time);
-        $display("  DAC Data:           0x%08h", dut.dac_data);
-        $display("  Audio Out [15:0]:   0x%04h (%d)", dut.audio_out, $signed(dut.audio_out));
-        $display("  Channel: %s", i2s_ws_o ? "RIGHT" : "LEFT");
-    end
-    
-    // Monitor I2S word select with frame counting
-    always @(posedge i2s_ws_o or negedge i2s_ws_o) begin
-        if (!i2s_ws_o) begin
-            frame_count++;
-            $display("\n===== I2S Frame #%0d at %0t ns =====", frame_count, $time);
+        if (dut.dac_data != 32'h0) begin
+            $display("\n----- DAC Output at %0t ns -----", $time);
+            $display("  DAC Data:           0x%08h", dut.dac_data);
+            $display("  Audio Out:          0x%04h (%d)", dut.audio_out, $signed(dut.audio_out));
+            $display("  Low Band Out:       0x%04h (%d)", dut.low_band_out, $signed(dut.low_band_out));
+            $display("  Mid Band Out:       0x%04h (%d)", dut.mid_band_out, $signed(dut.mid_band_out));
+            $display("  High Band Out:      0x%04h (%d)", dut.high_band_out, $signed(dut.high_band_out));
+            $display("  Channel:            %s", i2s_ws_o ? "RIGHT" : "LEFT");
         end
     end
     
-    // Task to generate realistic I2S input stream
-    task automatic send_i2s_sample(input logic [23:0] left_data, input logic [23:0] right_data);
-        integer i;
-        logic [47:0] i2s_frame;
+    // Task to send continuous I2S with proper timing
+    task automatic send_continuous_i2s();
+        logic [23:0] left_data, right_data;
+        integer phase;
+        real sample_value;
         
-        // Pack left and right channels (MSB first in I2S)
-        i2s_frame = {left_data, right_data};
+        phase = 0;
         
-        $display("\n>>> Sending I2S Sample at %0t ns <<<", $time);
-        $display("    Left:  0x%06h (%d)", left_data, $signed(left_data));
-        $display("    Right: 0x%06h (%d)", right_data, $signed(right_data));
-        
-        // Send 48 bits (24 per channel) synchronized with I2S clock
-        for (i = 47; i >= 0; i--) begin
-            @(negedge i2s_sck_o);  // Change on falling edge (typical I2S)
-            i2s_sd_i = i2s_frame[i];
+        forever begin
+            // Generate sine wave test pattern
+            sample_value = $sin(phase * 3.14159 / 16.0);  // Low frequency sine
+            left_data = $rtoi(sample_value * 1000000.0);  // Scale to 24-bit range
+            right_data = $rtoi(sample_value * 800000.0);   // Slightly different amplitude
+            
+            // Wait for word select edge (new frame)
+            @(negedge i2s_ws_o);
+            tx_sample_count++;
+            
+            // Send left channel (24 bits MSB first)
+            for (int i = 23; i >= 0; i--) begin
+                @(negedge i2s_sck_o);
+                i2s_sd_i = left_data[i];
+            end
+            
+            // Wait for right channel
+            @(posedge i2s_ws_o);
+            
+            // Send right channel (24 bits MSB first)
+            for (int i = 23; i >= 0; i--) begin
+                @(negedge i2s_sck_o);
+                i2s_sd_i = right_data[i];
+            end
+            
+            phase = (phase + 1) % 32;
+            
+            // Periodic status
+            if (tx_sample_count % 10 == 0) begin
+                $display("\n[TX] Sent %0d complete frames (L+R pairs)", tx_sample_count);
+            end
         end
     endtask
     
-    // Main test stimulus
+    // Alternative: Send stepped test tones
+    task automatic send_stepped_tones();
+        logic [23:0] test_value;
+        integer step;
+        
+        step = 0;
+        test_value = 24'h010000;  // Start with small value
+        
+        forever begin
+            // Wait for frame start
+            @(negedge i2s_ws_o);
+            tx_sample_count++;
+            
+            // Send same value for both channels
+            // Left channel
+            for (int i = 23; i >= 0; i--) begin
+                @(negedge i2s_sck_o);
+                i2s_sd_i = test_value[i];
+            end
+            
+            // Right channel
+            @(posedge i2s_ws_o);
+            for (int i = 23; i >= 0; i--) begin
+                @(negedge i2s_sck_o);
+                i2s_sd_i = test_value[i];
+            end
+            
+            // Change test value every 20 samples
+            if (tx_sample_count % 20 == 0) begin
+                step++;
+                case (step % 6)
+                    0: test_value = 24'h010000;  // +65536
+                    1: test_value = 24'h100000;  // +1048576
+                    2: test_value = 24'h400000;  // +4194304
+                    3: test_value = 24'hFF0000;  // -65536
+                    4: test_value = 24'hF00000;  // -1048576
+                    5: test_value = 24'h000000;  // 0
+                endcase
+                $display("\n[STIMULUS] Changing to test value: 0x%06h (%d)", 
+                         test_value, $signed(test_value));
+            end
+        end
+    endtask
+    
+    // Main test sequence
     initial begin
-        // Initialize
         reset_n_i = 0;
         i2s_sd_i = 0;
         
         $display("\n--- RESET PHASE ---");
-        $display("Time: %0t ns - Asserting reset", $time);
-        
         #200;
         reset_n_i = 1;
         $display("Time: %0t ns - Reset released", $time);
         
-        // Wait for I2S to start
+        // Wait for I2S clock
         $display("\n--- WAITING FOR I2S CLOCK ---");
         wait(i2s_sck_o !== 1'bx);
-        repeat(10) @(posedge i2s_sck_o);
-        $display("Time: %0t ns - I2S clock detected", $time);
+        repeat(100) @(posedge i2s_sck_o);
+        $display("Time: %0t ns - I2S system ready\n", $time);
         
-        $display("\n--- SENDING TEST PATTERNS ---");
+        $display("--- STARTING CONTINUOUS I2S TRANSMISSION ---\n");
         
-        // Test Pattern 1: Small amplitude sine-like values
-        $display("\nPattern 1: Low amplitude test");
-        left_channel = 24'h001000;   // +4096
-        right_channel = 24'h001000;
-        send_i2s_sample(left_channel, right_channel);
+        // Choose one:
+        // fork
+        //     send_continuous_i2s();  // Sine wave
+        // join_none
         
-        repeat(5) @(posedge i2s_ws_o);
-        
-        // Test Pattern 2: Medium amplitude
-        $display("\nPattern 2: Medium amplitude test");
-        left_channel = 24'h100000;   // Larger positive
-        right_channel = 24'h0F0000;
-        send_i2s_sample(left_channel, right_channel);
-        
-        repeat(5) @(posedge i2s_ws_o);
-        
-        // Test Pattern 3: Negative values
-        $display("\nPattern 3: Negative values");
-        left_channel = 24'hFF0000;   // Negative
-        right_channel = 24'hFE0000;
-        send_i2s_sample(left_channel, right_channel);
-        
-        repeat(5) @(posedge i2s_ws_o);
-        
-        // Test Pattern 4: Maximum positive
-        $display("\nPattern 4: Maximum positive");
-        left_channel = 24'h7FFFFF;   // Max positive
-        right_channel = 24'h7FFFFF;
-        send_i2s_sample(left_channel, right_channel);
-        
-        repeat(5) @(posedge i2s_ws_o);
-        
-        // Test Pattern 5: Maximum negative
-        $display("\nPattern 5: Maximum negative");
-        left_channel = 24'h800000;   // Max negative
-        right_channel = 24'h800000;
-        send_i2s_sample(left_channel, right_channel);
-        
-        repeat(5) @(posedge i2s_ws_o);
-        
-        // Test Pattern 6: Alternating
-        $display("\nPattern 6: Alternating pattern");
-        for (int j = 0; j < 5; j++) begin
-            left_channel = (j % 2) ? 24'h200000 : 24'hE00000;
-            right_channel = (j % 2) ? 24'hE00000 : 24'h200000;
-            send_i2s_sample(left_channel, right_channel);
-            repeat(3) @(posedge i2s_ws_o);
-        end
-        
-        $display("\n--- TEST PATTERNS COMPLETE ---");
-        
-        // Continue for observation
-        #100000;
+        fork
+            send_stepped_tones();     // Stepped test tones (easier to track)
+        join_none
     end
     
-    // Periodic comprehensive status report
+    // Comprehensive periodic report
     initial begin
         forever begin
-            #50000;
-            $display("\n╔════════════════════════════════════════════════════════════╗");
-            $display("║ STATUS REPORT at %0t ns", $time);
-            $display("╠════════════════════════════════════════════════════════════╣");
-            $display("║ Samples Received:     %0d", sample_count);
-            $display("║ Frames Sent:          %0d", frame_count);
-            $display("║ Current latch_data:   0x%08h", dut.latch_data);
-            $display("║ Current dac_data:     0x%08h", dut.dac_data);
-            $display("║ Current audio_out:    0x%04h (%d)", dut.audio_out, $signed(dut.audio_out));
-            $display("║ Config Enable:        %0b", conf_en_i);
-            $display("╚════════════════════════════════════════════════════════════╝\n");
+            #100000;  // Every 100μs
+            $display("\n╔══════════════════════════════════════════════════════════════╗");
+            $display("║ STATUS at %0t ns", $time);
+            $display("╠══════════════════════════════════════════════════════════════╣");
+            $display("║ TX Frames Sent:       %6d", tx_sample_count);
+            $display("║ RX Samples Received:  %6d", sample_count);
+            $display("║ Current Latch:        0x%08h (%d)", 
+                     dut.latch_data, $signed(dut.latch_data));
+            $display("║ Current Audio Out:    0x%04h (%d)", 
+                     dut.audio_out, $signed(dut.audio_out));
+            $display("║ Filter Band Outputs:");
+            $display("║   Low:  %6d   Mid:  %6d   High: %6d",
+                     $signed(dut.low_band_out), $signed(dut.mid_band_out), 
+                     $signed(dut.high_band_out));
+            $display("╚══════════════════════════════════════════════════════════════╝\n");
         end
     end
     
-    // Waveform dump
+    // VCD dump
     initial begin
         $dumpfile("top_tb.vcd");
         $dumpvars(0, top_tb);
     end
     
-    // Simulation timeout
+    // Simulation end
     initial begin
-        #500000;
-        $display("\n╔════════════════════════════════════════════════════════════╗");
-        $display("║ SIMULATION COMPLETE at %0t ns", $time);
-        $display("╠════════════════════════════════════════════════════════════╣");
-        $display("║ Total ADC Samples:    %0d", sample_count);
-        $display("║ Total Frames Sent:    %0d", frame_count);
-        $display("╚════════════════════════════════════════════════════════════╝");
+        #2000000;  // 2ms simulation
+        $display("\n╔══════════════════════════════════════════════════════════════╗");
+        $display("║ SIMULATION COMPLETE");
+        $display("╠══════════════════════════════════════════════════════════════╣");
+        $display("║ Total Frames Sent:    %6d", tx_sample_count);
+        $display("║ Total Samples RX:     %6d", sample_count);
+        $display("║ Data throughput:      %0d%%", (sample_count * 100) / tx_sample_count);
+        $display("╚══════════════════════════════════════════════════════════════╝");
         $finish;
     end
     
