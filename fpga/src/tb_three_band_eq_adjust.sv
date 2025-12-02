@@ -97,11 +97,14 @@ module tb_three_band_eq_adjust();
     
     // Task to generate and apply a sinusoidal sample
     task apply_sine_sample(input real frequency, input real amplitude, input integer sample_num);
-        real sample_rate = 48000.0;
-        real phase = 2.0 * PI * frequency * sample_num / sample_rate;
-        real sine_value = amplitude * $sin(phase);
-        logic signed [15:0] sample_q2_14;
+        automatic real sample_rate;
+        automatic real phase;
+        automatic real sine_value;
+        automatic logic signed [15:0] sample_q2_14;
         
+        sample_rate = 48000.0;
+        phase = 2.0 * PI * frequency * sample_num / sample_rate;
+        sine_value = amplitude * $sin(phase);
         sample_q2_14 = real_to_q2_14(sine_value);
         apply_sample(sample_q2_14);
     endtask
