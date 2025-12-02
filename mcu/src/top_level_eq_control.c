@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include "STM32L432KC.h"
+#include "coefficient_calculations_q14.h"  // Add this
 
 // -----------------------------
 // External Drivers
@@ -14,20 +15,6 @@ char spiSendReceive(char send);
 
 void initADC(void);
 uint16_t readADC(uint8_t channel);
-
-// -----------------------------
-// DAC Gain Mapping Helper
-// -----------------------------
-
-#define UNITY_SNAP_THRESHOLD 0.95f
-
-static inline float dac_to_gain(uint16_t dac_value, uint16_t dac_max)
-{
-    if (dac_value >= (uint16_t)(UNITY_SNAP_THRESHOLD * dac_max))
-        return 1.0f;
-
-    return (float)dac_value / (float)dac_max;
-}
 
 // -----------------------------
 // Q2.14 Coefficient API
