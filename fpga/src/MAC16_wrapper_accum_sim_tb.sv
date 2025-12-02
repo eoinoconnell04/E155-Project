@@ -60,12 +60,10 @@ module MAC16_wrapper_accum_sim_tb;
             ce = 1'b1;
             
             // Cycle 1: Inputs get registered, CE gets registered
-            //          MAC sees ce_reg=0 (previous value), so no operation yet
             @(posedge clk);
-            ce = 1'b0;  // ← CRITICAL: Turn off CE immediately after one cycle!
+            ce = 1'b0;  // Turn off CE after one cycle
             
-            // Cycle 2: MAC operates with registered inputs and ce_reg=1
-            //          Result becomes available
+            // Cycle 2: MAC operates, result becomes available
             @(posedge clk);
             #1;
             
@@ -101,7 +99,8 @@ module MAC16_wrapper_accum_sim_tb;
         
         $display("=== MAC16 Wrapper Accumulator Testbench ===");
         $display("Clock Period: %0.1f ns", CLK_PERIOD);
-        $display("Testing Q2.14 fixed-point arithmetic\n");
+        $display("Testing Q2.14 fixed-point arithmetic");
+        $display("Q2.14 valid range: -2.0 to +1.9999\n");
         
         // Initialize - both resets asserted (active LOW)
         reset = 1'b0;     // System reset asserted
@@ -126,7 +125,7 @@ module MAC16_wrapper_accum_sim_tb;
         
         mac_operation(1.0, 1.0, "1.0 * 1.0");
         reset_mac();
-        mac_operation(2.0, 3.0, "2.0 * 3.0");
+        mac_operation(1.5, 1.0, "1.5 * 1.0");
         reset_mac();
         mac_operation(0.5, 0.5, "0.5 * 0.5");
         reset_mac();
@@ -141,37 +140,37 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Expected: result accumulates (a*b + previous)");
         $display("****************************************");
         
-        mac_operation(1.0, 1.0, "Step 1: 1.0 * 1.0");
-        mac_operation(1.0, 1.0, "Step 2: 1.0 * 1.0 + previous");
-        mac_operation(1.0, 1.0, "Step 3: 1.0 * 1.0 + previous");
+        mac_operation(1.0, 1.0, "Step 1: 1.0 * 1.0 = 1.0");
+        mac_operation(1.0, 1.0, "Step 2: 1.0 * 1.0 + 1.0 = 2.0");
+        mac_operation(1.0, 1.0, "Step 3: 1.0 * 1.0 + 2.0 = 3.0");
         $display("Expected final: ~3.0");
         
         //========================================
-        // TEST 3: MAC with Different Values
+        // TEST 3: MAC with Different Values (FIXED for Q2.14 range)
         //========================================
         reset_mac();
         $display("****************************************");
         $display("TEST 3: MAC with Different Values");
-        $display("Simulating: (2*3) + (4*5) + (1*2) = 6 + 20 + 2 = 28");
+        $display("Simulating: (1.5*1.0) + (0.5*1.5) + (1.0*0.5) = 1.5 + 0.75 + 0.5 = 2.75");
         $display("****************************************");
         
-        mac_operation(2.0, 3.0, "Step 1: 2.0 * 3.0");
-        mac_operation(4.0, 5.0, "Step 2: 4.0 * 5.0 + previous");
-        mac_operation(1.0, 2.0, "Step 3: 1.0 * 2.0 + previous");
-        $display("Expected final: ~28.0");
+        mac_operation(1.5, 1.0, "Step 1: 1.5 * 1.0 = 1.5");
+        mac_operation(0.5, 1.5, "Step 2: 0.5 * 1.5 + 1.5 = 2.25");
+        mac_operation(1.0, 0.5, "Step 3: 1.0 * 0.5 + 2.25 = 2.75");
+        $display("Expected final: ~2.75");
         
         //========================================
-        // TEST 4: Negative Numbers
+        // TEST 4: Negative Numbers (FIXED for Q2.14 range)
         //========================================
         reset_mac();
         $display("****************************************");
         $display("TEST 4: Negative Numbers");
-        $display("Simulating: (5*3) + (-2*4) = 15 + (-8) = 7");
+        $display("Simulating: (1.5*1.0) + (-1.0*0.5) = 1.5 + (-0.5) = 1.0");
         $display("****************************************");
         
-        mac_operation(5.0, 3.0, "Step 1: 5.0 * 3.0");
-        mac_operation(-2.0, 4.0, "Step 2: -2.0 * 4.0 + previous");
-        $display("Expected final: ~7.0");
+        mac_operation(1.5, 1.0, "Step 1: 1.5 * 1.0 = 1.5");
+        mac_operation(-1.0, 0.5, "Step 2: -1.0 * 0.5 + 1.5 = 1.0");
+        $display("Expected final: ~1.0");
         
         //========================================
         // TEST 5: Fractional Values
@@ -182,8 +181,8 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Simulating: (0.5*0.5) + (0.25*0.5) = 0.25 + 0.125 = 0.375");
         $display("****************************************");
         
-        mac_operation(0.5, 0.5, "Step 1: 0.5 * 0.5");
-        mac_operation(0.25, 0.5, "Step 2: 0.25 * 0.5 + previous");
+        mac_operation(0.5, 0.5, "Step 1: 0.5 * 0.5 = 0.25");
+        mac_operation(0.25, 0.5, "Step 2: 0.25 * 0.5 + 0.25 = 0.375");
         $display("Expected final: ~0.375");
         
         //========================================
@@ -195,36 +194,37 @@ module MAC16_wrapper_accum_sim_tb;
         $display("Testing CE signal - accumulation should pause when CE=0");
         $display("****************************************");
         
-        mac_operation(1.0, 1.0, "Step 1: 1.0 * 1.0");
+        mac_operation(1.0, 1.0, "Step 1: 1.0 * 1.0 = 1.0");
         
         // Disable CE - result should hold
         @(posedge clk);
         ce = 1'b0;
-        a_in = real_to_q2_14(5.0);
-        b_in = real_to_q2_14(5.0);
+        a_in = real_to_q2_14(1.5);
+        b_in = real_to_q2_14(1.5);
         repeat(3) @(posedge clk);
         #1;
-        $display("CE disabled: a=5.0, b=5.0, result=%0.4f (should still be ~1.0)", 
+        $display("CE disabled: a=1.5, b=1.5, result=%0.4f (should still be ~1.0)", 
                  q4_28_to_real(result));
         
         // Re-enable CE
-        mac_operation(2.0, 2.0, "CE re-enabled: 2.0 * 2.0 + previous");
-        $display("Expected: ~5.0 (1.0 from step 1 + 4.0 from this step)");
+        mac_operation(0.5, 1.0, "CE re-enabled: 0.5 * 1.0 + 1.0 = 1.5");
+        $display("Expected: ~1.5 (1.0 from step 1 + 0.5 from this step)");
         
         //========================================
-        // TEST 7: Pipeline Timing Test
+        // TEST 7: Pipeline Timing Test (FIXED for Q2.14 range)
         //========================================
         reset_mac();
         $display("****************************************");
         $display("TEST 7: Pipeline Timing");
         $display("Verifying pipeline delay");
+        $display("Testing: 1.5 * 1.0 = 1.5");
         $display("****************************************");
         
         @(posedge clk);
-        a_in = real_to_q2_14(3.0);
-        b_in = real_to_q2_14(4.0);
+        a_in = real_to_q2_14(1.5);
+        b_in = real_to_q2_14(1.0);
         ce = 1'b1;
-        $display("Cycle 0: Inputs loaded (a=3.0, b=4.0), CE=1, result=%0.4f", q4_28_to_real(result));
+        $display("Cycle 0: Inputs loaded (a=1.5, b=1.0), CE=1, result=%0.4f", q4_28_to_real(result));
         
         @(posedge clk);
         ce = 1'b0;
@@ -235,7 +235,7 @@ module MAC16_wrapper_accum_sim_tb;
         
         @(posedge clk);
         #1;
-        $display("Cycle 3: Result available, result=%0.4f (expected ~12.0)", q4_28_to_real(result));
+        $display("Cycle 3: Result available, result=%0.4f (expected ~1.5)", q4_28_to_real(result));
         
         //========================================
         // TEST 8: Biquad IIR Simulation
@@ -244,9 +244,10 @@ module MAC16_wrapper_accum_sim_tb;
         $display("****************************************");
         $display("TEST 8: Biquad IIR Filter Simulation");
         $display("Simulating: y = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]");
+        $display("All values within Q2.14 range");
         $display("****************************************");
         
-        // Example coefficients (simplified)
+        // Coefficients within Q2.14 range
         b0_val = 0.5; b1_val = 0.3; b2_val = 0.2;
         a1_val = 0.4; a2_val = 0.1;
         x_n_val = 1.0; x_n1_val = 0.5; x_n2_val = 0.2;
@@ -273,7 +274,7 @@ module MAC16_wrapper_accum_sim_tb;
         $display("TEST 9: System Reset During Operation");
         $display("****************************************");
         
-        mac_operation(5.0, 5.0, "Start: 5.0 * 5.0");
+        mac_operation(1.5, 1.5, "Start: 1.5 * 1.5");
         
         @(posedge clk);
         reset = 1'b0;  // Assert system reset (active LOW)
@@ -285,10 +286,28 @@ module MAC16_wrapper_accum_sim_tb;
         #1;
         $display("After system reset: result=%0.4f (should be 0.0)", q4_28_to_real(result));
         
+        //========================================
+        // TEST 10: Saturation Test
+        //========================================
+        $display("\n****************************************");
+        $display("TEST 10: Q2.14 Range Limits");
+        $display("Testing values at format boundaries");
+        $display("****************************************");
+        
+        reset_mac();
+        mac_operation(1.9999, 1.0, "Max positive: 1.9999 * 1.0");
+        reset_mac();
+        mac_operation(-2.0, 1.0, "Max negative: -2.0 * 1.0");
+        reset_mac();
+        
+        // Test what happens with out-of-range values
+        $display("\nTesting out-of-range inputs (will be clamped):");
+        mac_operation(3.0, 2.0, "Out of range: 3.0 * 2.0 (clamped to 1.9999 * 1.9999)");
+        
         // Finish
         repeat(10) @(posedge clk);
         $display("\n=== All Tests Complete ===");
-        $display("If all results match expected values, MAC is working correctly!");
+        $display("All results should now match expected values!");
         $finish;
     end
     
