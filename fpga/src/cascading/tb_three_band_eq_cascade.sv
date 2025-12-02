@@ -27,6 +27,13 @@ module tb_three_band_eq_cascade();
     logic signed [15:0] test_samples [0:15];
     logic signed [15:0] expected_out;
     
+    // Timing measurement variables (declare at top)
+    integer error;
+    integer start_time;
+    integer low_time;
+    integer mid_time;
+    integer high_time;
+    
     // Instantiate DUT
     three_band_eq dut (
         .clk(clk),
@@ -120,7 +127,7 @@ module tb_three_band_eq_cascade();
             // (assuming low filter coefficients are also near unity)
             // Allow for some quantization error
             if (i > 2) begin // Skip first few samples (transient)
-                integer error = audio_out - test_samples[i-2]; // Account for pipeline delay
+                error = audio_out - test_samples[i-2]; // Account for pipeline delay
                 if (error < -100 || error > 100) begin
                     $display("WARNING: Large deviation detected!");
                 end
@@ -133,25 +140,25 @@ module tb_three_band_eq_cascade();
         @(posedge clk);
         audio_in = 16'sh3000; // Test value
         
-        integer start_time = $time;
+        start_time = $time;
         $display("[%0t] Sample applied, monitoring cascade...", $time);
         
         // Monitor low filter completion
         @(posedge mac_a);
-        integer low_time = $time - start_time;
+        low_time = $time - start_time;
         $display("[%0t] Low filter complete (took %0d ns, ~%0d cycles)", 
                  $time, low_time, low_time/20.833);
         
         // Monitor mid filter completion (look for mid_valid in DUT)
         // This is internal, so we'll just wait and observe
         repeat(15) @(posedge clk);
-        integer mid_time = $time - start_time;
+        mid_time = $time - start_time;
         $display("[%0t] Mid filter should be complete (took %0d ns, ~%0d cycles)", 
                  $time, mid_time, mid_time/20.833);
         
         // Monitor high filter completion
         repeat(15) @(posedge clk);
-        integer high_time = $time - start_time;
+        high_time = $time - start_time;
         $display("[%0t] High filter should be complete (took %0d ns, ~%0d cycles)", 
                  $time, high_time, high_time/20.833);
         
