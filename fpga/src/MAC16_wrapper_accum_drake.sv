@@ -41,23 +41,23 @@ module MAC16_wrapper_accum_drake (
     logic co_internal, accumco_internal, signextout_internal;
     
     MAC16 #(
-        .A_REG("0'b1"),
-        .B_REG("0'b1"),
-        .C_REG("0'b0"),
-        .D_REG("0'b0"),
-        .MODE_8x8("0'b0"),
-        .A_SIGNED("0'b1"),
-        .B_SIGNED("0'b1"),
+        .A_REG("0b1"),
+        .B_REG("0b1"),
+        .C_REG("0b0"),
+        .D_REG("0b0"),
+        .MODE_8x8("0b0"),
+        .A_SIGNED("0b1"),
+        .B_SIGNED("0b1"),
         
         // *** DATAPATH ROUTING - STRING FORMAT ***
-        .TOPADDSUB_LOWERINPUT("0'b10"),      // mult16x16 upper
-        .BOTADDSUB_LOWERINPUT("0'b10"),      // mult16x16 lower
-        .TOPADDSUB_UPPERINPUT("0'b0"),       // accumulate
-        .BOTADDSUB_UPPERINPUT("0'b0"),       // accumulate
-        .TOPOUTPUT_SELECT("0'b00"),          // top accumulator
-        .BOTOUTPUT_SELECT("0'b00"),          // bottom accumulator
-        .TOPADDSUB_CARRYSELECT("0'b10"),     // carry from lower
-        .BOTADDSUB_CARRYSELECT("0'b00")      // no carry
+        .TOPADDSUB_LOWERINPUT("0b10"),      // mult16x16 upper
+        .BOTADDSUB_LOWERINPUT("0b10"),      // mult16x16 lower
+        .TOPADDSUB_UPPERINPUT("0b0"),       // accumulate
+        .BOTADDSUB_UPPERINPUT("0b0"),       // accumulate
+        .TOPOUTPUT_SELECT("0b00"),          // top accumulator
+        .BOTOUTPUT_SELECT("0b00"),          // bottom accumulator
+        .TOPADDSUB_CARRYSELECT("0b10"),     // carry from lower
+        .BOTADDSUB_CARRYSELECT("0b00")      // no carry
     ) mac_inst (
         .CLK(clk), 
         .CE(ce),
