@@ -195,7 +195,7 @@ module iir_time_mux_accum(
     end
     
     // Instantiate DSP slice with accumulator
-    MAC16_wrapper_accum mac_inst(
+    MAC16_wrapper_accum_sim mac_inst(
         .clk(clk),
         .reset(reset),
         .mac_rst(mac_rst),
