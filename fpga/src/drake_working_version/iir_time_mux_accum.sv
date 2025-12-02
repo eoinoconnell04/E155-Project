@@ -13,11 +13,11 @@ module iir_time_mux_accum(
     input  logic signed [15:0] latest_sample,   // x[n]
     input  logic signed [15:0] b0, b1, b2, a1, a2,
     output logic signed [15:0] filtered_output,
-    output logic test	// y[n]
+    output logic test // y[n]
 );
 
-	logic output_ready;
-	
+logic output_ready;
+
     // FSM States - expanded to 4 bits to add DONE state
     typedef enum logic [3:0] {
         IDLE      = 4'd0,
@@ -28,7 +28,7 @@ module iir_time_mux_accum(
         MULT_B2   = 4'd5,
         MULT_A1   = 4'd6,
         MULT_A2   = 4'd7,
-        DONE      = 4'd8
+       DONE      = 4'd8
     } state_t;
     
     state_t state, next_state;
@@ -44,29 +44,30 @@ module iir_time_mux_accum(
         end else begin
             l_r_clk_d1 <= l_r_clk;
             l_r_clk_d2 <= l_r_clk_d1;
-			l_r_edge <= l_r_clk_d1 ^ l_r_clk_d2;
+l_r_edge <= l_r_clk_d1 ^ l_r_clk_d2;
         end
     end
+ 
+// Shift into pipeline in WAIT1 state (after edge settles)
+logic signed [15:0] x_n, x_n1, x_n2;
+logic signed [15:0] x_processing;  // ← NEW: latched sample being processed
 
-    
-    // Sample shift registers (x[n], x[n-1], x[n-2])
-    logic signed [15:0] x_n, x_n1, x_n2;
-    
-    always_ff @(posedge clk) begin
-        if (!reset) begin
-            x_n  <= 16'd0;
-            x_n1 <= 16'd0;
-            x_n2 <= 16'd0;
-        end else if (l_r_edge) begin
-            x_n  <= latest_sample;
-            x_n1 <= x_n;
-            x_n2 <= x_n1;
-        end
+always_ff @(posedge clk) begin
+    if (!reset) begin
+        x_n  <= 16'd0;
+        x_n1 <= 16'd0;
+        x_n2 <= 16'd0;
+        x_processing <= 16'd0;  // ← NEW
+    end else if (l_r_edge) begin
+        x_n  <= latest_sample;
+        x_n1 <= x_n;
+        x_n2 <= x_n1;
+        x_processing <= x_n;  // ← NEW: Latch the sample we're about to process
     end
+end
     
-    // Output history shift registers (y[n-1], y[n-2])
+    // Output history
     logic signed [15:0] y_n1, y_n2;
-
     
     always_ff @(posedge clk) begin
         if (!reset) begin
@@ -77,10 +78,9 @@ module iir_time_mux_accum(
             y_n2 <= y_n1;
         end
     end
-    
     // DSP slice inputs
-	// Coefficient input
-	logic signed [15:0] mac_a;
+// Coefficient input
+logic signed [15:0] mac_a;
     logic signed [15:0] mac_b;  // Data input
     logic signed [31:0] mac_result; // MAC result
     
@@ -91,7 +91,7 @@ module iir_time_mux_accum(
     // MAC reset control: reset accumulator only when truly idle
     //assign mac_rst = !reset || (state == IDLE && !l_r_edge);
     //assign mac_rst = reset && !(state == IDLE);
-	assign mac_rst = reset && (state != WAIT1) && (state != WAIT2);
+assign mac_rst = reset && (state != WAIT1) && (state != WAIT2);
     // MAC clock enable: enable during multiply states
     assign mac_ce = (state == MULT_B0) || (state == MULT_B1) || (state == MULT_B2) || 
                     (state == MULT_A1) || (state == MULT_A2);
@@ -180,22 +180,26 @@ module iir_time_mux_accum(
         endcase
     end
     
-    // Output logic - extract Q2.14 result from Q4.28 accumulator
-    // mac_result[31:0] contains accumulated (a*b) where a,b are Q2.14, so product is Q4.28
-    // Sample result in DONE state (after pipeline completes)
-    always_ff @(posedge clk) begin
-        if (!reset) begin
-            filtered_output <= 16'd0;
-            output_ready <= 1'b0;
-        end else if (state == DONE) begin
-            // truncate from Q4.28 to Q2.14
-            filtered_output <= mac_result[29:14] + mac_result[13];
-            output_ready <= 1'b1;
-        end else begin
-            output_ready <= 1'b0;
-        end
+logic signed [31:0] mac_result_latched;
+
+always_ff @(posedge clk) begin
+    if (!reset) begin
+        mac_result_latched <= 32'd0;
+    end else if (state == DONE) begin
+        mac_result_latched <= mac_result;  
     end
-    
+end
+always_ff @(posedge clk) begin
+    if (!reset) begin
+        filtered_output <= 16'd0;
+        output_ready <= 1'b0;
+    end else if (l_r_edge) begin  
+        filtered_output <= mac_result_latched[29:14];
+        output_ready <= 1'b1;
+    end else begin
+        output_ready <= 1'b0;
+    end
+end
     // Instantiate DSP slice with accumulator
     MAC16_wrapper_accum mac_inst(
         .clk(clk),
@@ -206,7 +210,7 @@ module iir_time_mux_accum(
         .b_in(mac_b), 
         .result(mac_result)
     );
-	
-	assign test = mac_rst;
+
+assign test = mac_rst;
 
 endmodule
