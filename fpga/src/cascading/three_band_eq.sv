@@ -79,7 +79,7 @@ module three_band_eq(
         .a1(LOW_A1),
         .a2(LOW_A2),
         .filtered_output(low_out),
-        .output_valid(low_valid)
+        .output_ready(low_valid)
     );
     
     // Stage 2: Mid filter starts when low filter completes
@@ -97,7 +97,7 @@ module three_band_eq(
         .a1(MID_A1),
         .a2(MID_A2),
         .filtered_output(mid_out),
-        .output_valid(mid_valid)
+        .output_ready(mid_valid)
     );
     
     // Stage 3: High filter starts when mid filter completes
@@ -115,7 +115,7 @@ module three_band_eq(
         .a1(HIGH_A1),
         .a2(HIGH_A2),
         .filtered_output(high_out),
-        .output_valid(high_valid)
+        .output_ready(high_valid)
     );
     
     // Final output: high_out is the result of all three cascaded filters
