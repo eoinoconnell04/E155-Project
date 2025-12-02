@@ -18,8 +18,6 @@ module iir_time_mux_accum(
     output logic        test          // Debug output
 );
 
-    logic output_ready;
-
     // FSM States - expanded to 4 bits to add DONE state
     typedef enum logic [3:0] {
         IDLE      = 4'd0,
@@ -60,7 +58,7 @@ module iir_time_mux_accum(
         if (!reset) begin
             y_n1 <= 16'd0;
             y_n2 <= 16'd0;
-        end else if (output_ready) begin
+        end else if (output_valid) begin
             y_n1 <= filtered_output;
             y_n2 <= y_n1;
         end
@@ -181,15 +179,12 @@ module iir_time_mux_accum(
     always_ff @(posedge clk) begin
         if (!reset) begin
             filtered_output <= 16'd0;
-            output_ready <= 1'b0;
             output_valid <= 1'b0;
         end else if (state == DONE) begin  
             // Extract Q2.14 from Q4.28 with rounding
             filtered_output <= mac_result_latched[29:14] + mac_result_latched[13];
-            output_ready <= 1'b1;
             output_valid <= 1'b1;  // Signal that output is valid
         end else begin
-            output_ready <= 1'b0;
             output_valid <= 1'b0;
         end
     end
