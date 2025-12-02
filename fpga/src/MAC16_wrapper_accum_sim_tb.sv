@@ -50,19 +50,23 @@ module MAC16_wrapper_accum_sim_tb;
         return real'(value) / (2.0 ** 28.0);
     endfunction
     
-    // Task to perform a single multiply-accumulate
+    // Task to perform a single multiply-accumulate with corrected timing
     task mac_operation(input real a_val, input real b_val, input string description);
         begin
+            // Cycle 0: Load inputs and assert CE
             @(posedge clk);
             a_in = real_to_q2_14(a_val);
             b_in = real_to_q2_14(b_val);
             ce = 1'b1;
             
+            // Cycle 1: Inputs get registered, CE gets registered
+            //          MAC sees ce_reg=0 (previous value), so no operation yet
             @(posedge clk);
-            // Keep CE high for the computation cycle
+            ce = 1'b0;  // ← CRITICAL: Turn off CE immediately after one cycle!
             
+            // Cycle 2: MAC operates with registered inputs and ce_reg=1
+            //          Result becomes available
             @(posedge clk);
-            ce = 1'b0;
             #1;
             
             $display("%s: a=%0.4f, b=%0.4f, result=%0.4f (0x%h)", 
@@ -213,22 +217,25 @@ module MAC16_wrapper_accum_sim_tb;
         reset_mac();
         $display("****************************************");
         $display("TEST 7: Pipeline Timing");
-        $display("Verifying 2-cycle pipeline delay");
+        $display("Verifying pipeline delay");
         $display("****************************************");
         
         @(posedge clk);
         a_in = real_to_q2_14(3.0);
         b_in = real_to_q2_14(4.0);
         ce = 1'b1;
-        $display("Cycle 0: Inputs loaded (a=3.0, b=4.0), result=%0.4f", q4_28_to_real(result));
-        
-        @(posedge clk);
-        $display("Cycle 1: Inputs registered, result=%0.4f", q4_28_to_real(result));
+        $display("Cycle 0: Inputs loaded (a=3.0, b=4.0), CE=1, result=%0.4f", q4_28_to_real(result));
         
         @(posedge clk);
         ce = 1'b0;
+        $display("Cycle 1: Inputs registered, CE_reg=0, result=%0.4f", q4_28_to_real(result));
+        
+        @(posedge clk);
+        $display("Cycle 2: MAC operates (CE_reg=1), result=%0.4f", q4_28_to_real(result));
+        
+        @(posedge clk);
         #1;
-        $display("Cycle 2: Result available, result=%0.4f (expected ~12.0)", q4_28_to_real(result));
+        $display("Cycle 3: Result available, result=%0.4f (expected ~12.0)", q4_28_to_real(result));
         
         //========================================
         // TEST 8: Biquad IIR Simulation
