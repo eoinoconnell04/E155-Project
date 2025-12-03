@@ -13,6 +13,7 @@ module three_band_eq(
     input  logic        clk,         // High speed system clock
     input  logic        l_r_clk,     // Left right select (new sample on every edge)
     input  logic        reset,
+    input logic        filter_bypass,
     input  logic signed [15:0] audio_in,      // Input audio sample
     output logic signed [15:0] audio_out,
 output logic mac_a // Output audio sample
