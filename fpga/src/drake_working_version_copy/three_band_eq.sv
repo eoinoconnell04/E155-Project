@@ -113,8 +113,8 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
             mid_input <= 1'b0;
             high_input <= 1'b0;
 
-            mid_ready <= 1'b0;;
-            high_ready <= 1'b0;
+            mid_input_ready <= 1'b0;;
+            high_input_ready <= 1'b0;
         end else begin
             mid_input <= low_band_out;
             high_input <= mid_band_out;
