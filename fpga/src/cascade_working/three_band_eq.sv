@@ -159,7 +159,7 @@ high_reg <= high_band_out;
 end
 // Sum in the NEXT cycle after registers are updated
 //audio_out <= (low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
-audio_out <= high_band_out;
+audio_out <= filter_bypass ? high_band_out : audio_in;
 end
 end
 /*
