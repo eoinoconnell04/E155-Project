@@ -61,45 +61,19 @@ module spi_wrapper(
         .valid(spi_valid)
     );
     
-    // Synchronize the valid signal (it's on the sck domain)
-    logic spi_valid_sync;
-    synchronizer #(.NUM_BITS(1)) valid_synchronizer (
-        .clk(clk),
-        .reset(reset),
-        .async_input(spi_valid),
-        .sync_output(spi_valid_sync)
-    );
-    
     // Registered data for reader
     logic [335:0] registered_data;
     
-    // Edge detection for valid signal
-    logic spi_valid_prev;
-    logic valid_pulse;
-    
-    always_ff @(posedge clk) begin
-        if (!reset) begin
-            spi_valid_prev <= 1'b0;
-        end else begin
-            spi_valid_prev <= spi_valid_sync;
-        end
-    end
-    
-    // Generate a single-cycle pulse on the rising edge of synchronized valid
-    assign valid_pulse = spi_valid_sync & ~spi_valid_prev;
-    
-    // Register SPI data when valid pulse occurs
+    // Register SPI data when valid is asserted
     always_ff @(posedge clk) begin
         if (!reset) begin
             registered_data <= 336'b0;
             valid_out <= 1'b0;
+        end else if (spi_valid) begin
+            registered_data <= spi_data;
+            valid_out <= 1'b1;
         end else begin
-            if (valid_pulse) begin
-                registered_data <= spi_data;
-                valid_out <= 1'b1;
-            end else begin
-                valid_out <= 1'b0;
-            end
+            valid_out <= 1'b0;
         end
     end
     
