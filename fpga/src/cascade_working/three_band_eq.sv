@@ -138,7 +138,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
 .test()
     );
     
-logic signed [15:0] low_reg, mid_reg, high_reg, audio_reg;
+logic signed [15:0] low_reg, mid_reg, high_reg, audio_reg, prev_audio_in;
 logic l_r_clk_prev;
 
 always_ff @(posedge clk) begin
@@ -147,7 +147,7 @@ always_ff @(posedge clk) begin
         mid_reg <= 16'sh0000;
         high_reg <= 16'sh0000;
         l_r_clk_prev <= 1'b0;
-        audio_out <= 16'sh0000;
+        //audio_out <= 16'sh0000;
     end else begin
         l_r_clk_prev <= l_r_clk;
 
@@ -156,6 +156,7 @@ always_ff @(posedge clk) begin
             low_reg <= low_band_out;
             mid_reg <= mid_band_out;
             high_reg <= high_band_out;
+            prev_audio_in <= audio_in;
             //audio_reg <= (mid_reg >>> 1);// + (mid_reg >>> 1);
         end
         // Sum in the NEXT cycle after registers are updated
