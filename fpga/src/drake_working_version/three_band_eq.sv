@@ -53,41 +53,44 @@ logic mac_a2, mac_a3;
 // Better low-pass (500Hz Butterworth)
 // Simple 1st-order low-pass (500Hz) - STABLE and good gain
 
-localparam logic signed [15:0] LOW_B0 = 16'sh03EE;  // 0.061
-localparam logic signed [15:0] LOW_B1 = 16'sh03EE;  // 0.061
+localparam logic signed [15:0] LOW_B0 = 16'sh4000;  // 0.061
+localparam logic signed [15:0] LOW_B1 = 16'sh0000;  // 0.061
 localparam logic signed [15:0] LOW_B2 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] LOW_A1 = 16'sh3823;  // 0.877 (negated to -0.877)
+localparam logic signed [15:0] LOW_A1 = 16'sh0000;  // 0.877 (negated to -0.877)
 localparam logic signed [15:0] LOW_A2 = 16'sh0000;  // 0.0
 
 // MID-PASS: 500Hz-5kHz bandpass (2nd order Butterworth)
 // Passes midrange, cuts bass and treble
+/*
 localparam logic signed [15:0] MID_B0 = 16'sh03EE;  // 0.061
 localparam logic signed [15:0] MID_B1 = 16'sh03EE;  // 0.061
 localparam logic signed [15:0] MID_B2 = 16'sh0000;  // 0.0
 localparam logic signed [15:0] MID_A1 = 16'sh3823;  // 0.877 (negated to -0.877)
 localparam logic signed [15:0] MID_A2 = 16'sh0000;  // 0.0
-/*
+*/
+
 localparam logic signed [15:0] MID_B0 = 16'sh4000;  // 1.0
 localparam logic signed [15:0] MID_B1 = 16'sh0000;  // 0.0
 localparam logic signed [15:0] MID_B2 = 16'sh0000;  // 0.0
 localparam logic signed [15:0] MID_A1 = 16'sh0000;  // 0.0
 localparam logic signed [15:0] MID_A2 = 16'sh0000;  // 0.0
-*/
+
 
 // HIGH-PASS: 5kHz cutoff (1st order Butterworth)
+/*
 localparam logic signed [15:0] HIGH_B0 = 16'sh03EE;  // 0.061
 localparam logic signed [15:0] HIGH_B1 = 16'sh03EE;  // 0.061
 localparam logic signed [15:0] HIGH_B2 = 16'sh0000;  // 0.0
 localparam logic signed [15:0] HIGH_A1 = 16'sh3823;  // 0.877 (negated to -0.877)
 localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
-// Passes treble, cuts bass
-/*
-localparam logic signed [15:0] HIGH_B0 = 16'sh3000;  // 0.750
-localparam logic signed [15:0] HIGH_B1 = 16'shD000;  // -0.750
-localparam logic signed [15:0] HIGH_B2 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] HIGH_A1 = 16'sh2000;  // 0.500 (negated to -0.500)
-localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
 */
+
+localparam logic signed [15:0] HIGH_B0 = 16'sh4000;  // 0.750
+localparam logic signed [15:0] HIGH_B1 = 16'sh0000;  // -0.750
+localparam logic signed [15:0] HIGH_B2 = 16'sh0000;  // 0.0
+localparam logic signed [15:0] HIGH_A1 = 16'sh0000;  // 0.500 (negated to -0.500)
+localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
+
 
     // Instantiate low-pass filter (processes bass frequencies)
     iir_time_mux_accum low_band_filter (
