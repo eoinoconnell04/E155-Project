@@ -24,28 +24,6 @@ logic        dac_request;
 
 logic [31:0] latch_data;
 
-// Filter coefficient parameters
-// Low-pass filter coefficients (500Hz cutoff)
-localparam logic signed [15:0] LOW_B0 = 16'sh4000;  // 0.061
-localparam logic signed [15:0] LOW_B1 = 16'sh0000;  // 0.061
-localparam logic signed [15:0] LOW_B2 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] LOW_A1 = 16'sh0000;  // 0.877 (negated to -0.877)
-localparam logic signed [15:0] LOW_A2 = 16'sh0000;  // 0.0
-
-// Mid-pass filter coefficients (500Hz-5kHz bandpass)
-localparam logic signed [15:0] MID_B0 = 16'sh4000;  // 1.0
-localparam logic signed [15:0] MID_B1 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] MID_B2 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] MID_A1 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] MID_A2 = 16'sh0000;  // 0.0
-
-// High-pass filter coefficients (5kHz cutoff)
-localparam logic signed [15:0] HIGH_B0 = 16'sh4000;  // 0.750
-localparam logic signed [15:0] HIGH_B1 = 16'sh0000;  // -0.750
-localparam logic signed [15:0] HIGH_B2 = 16'sh0000;  // 0.0
-localparam logic signed [15:0] HIGH_A1 = 16'sh0000;  // 0.500 (negated to -0.500)
-localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
-
 HSOSC #(.CLKHF_DIV ("0b10")) hf_osc (
 .CLKHFPU(1'b1),
     .CLKHFEN(1'b1),
@@ -98,24 +76,6 @@ three_band_eq filter(
     .reset(reset_n_i),
     .filter_bypass(filter_bypass),
     .audio_in(latch_data[23:8]),
-    // Low-pass filter coefficients
-    .low_b0(LOW_B0),
-    .low_b1(LOW_B1),
-    .low_b2(LOW_B2),
-    .low_a1(LOW_A1),
-    .low_a2(LOW_A2),
-    // Mid-pass filter coefficients
-    .mid_b0(MID_B0),
-    .mid_b1(MID_B1),
-    .mid_b2(MID_B2),
-    .mid_a1(MID_A1),
-    .mid_a2(MID_A2),
-    // High-pass filter coefficients
-    .high_b0(HIGH_B0),
-    .high_b1(HIGH_B1),
-    .high_b2(HIGH_B2),
-    .high_a1(HIGH_A1),
-    .high_a2(HIGH_A2),
     .audio_out(audio_out),
 	.mac_a(mac_a)
 );
@@ -174,4 +134,4 @@ lscc_i2s_codec #(
 //output                     i2s_sck_o;     //-- I2S clock output --bclk
 //output                     i2s_ws_o;      //-- I2S word select output -- lrclk
 
-endmodule
+endmodule 
