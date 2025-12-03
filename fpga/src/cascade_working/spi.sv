@@ -21,7 +21,11 @@ module spi(
         end else begin
             sreg <= {sreg[334:0], sdi};
             bit_count <= bit_count + 1;
-            if (bit_count == 335) valid <= 1;
+            if (bit_count == 335) begin 
+                valid <= 1;
+            end else begin
+                valid <= 0;
+            end
         end
     end
 
