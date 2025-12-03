@@ -175,10 +175,11 @@ audio_out <= (low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
 end
 end
 
+/*
 always_comb begin
 audio_out = audio_reg;//(low_reg >>> 1) + (mid_reg >>> 1);
 end
-/*
+
     // Sum all three bands (no scaling)
     // Note: Design filter coefficients to prevent 
 always_comb begin

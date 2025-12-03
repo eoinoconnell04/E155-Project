@@ -13,6 +13,7 @@ module iir_time_mux_accum(
     input  logic signed [15:0] latest_sample,   // x[n]
     input  logic signed [15:0] b0, b1, b2, a1, a2,
     output logic signed [15:0] filtered_output,
+    output logic output_ready,
     output logic test // y[n]
 );
 
