@@ -109,7 +109,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
     // Instantiate low-pass filter (processes bass frequencies)
     iir_time_mux_accum low_band_filter (
         .clk(clk),
-        .l_r_clk(l_r_clk),
+        .l_r_edge(l_r_edge),
         .reset(reset),
         .latest_sample(audio_in),
         .b0(LOW_B0),
@@ -124,7 +124,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
     // Instantiate band-pass filter (processes midrange frequencies)
     iir_time_mux_accum mid_band_filter (
         .clk(clk),
-        .l_r_clk(l_r_clk),
+        .l_r_edge(l_r_edge),
         .reset(reset),
         .latest_sample(audio_in),  // All filters get same input in parallel
         .b0(MID_B0),
@@ -139,7 +139,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
     // Instantiate high-pass filter (processes treble frequencies)
     iir_time_mux_accum high_band_filter (
         .clk(clk),
-        .l_r_clk(l_r_clk),
+        .l_r_edge(l_r_edge),
         .reset(reset),
         .latest_sample(audio_in),  // All filters get same input in parallel
         .b0(HIGH_B0),
