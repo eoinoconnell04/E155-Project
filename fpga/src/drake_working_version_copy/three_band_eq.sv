@@ -164,7 +164,7 @@ end else begin
 l_r_clk_prev <= l_r_clk;
 
 // Detect any edge of l_r_clk (rising or falling)
-if (l_r_clk != l_r_clk_prev) begin
+if (l_r_edge) begin
 low_reg <= low_band_out;
 mid_reg <= mid_band_out;
 high_reg <= high_band_out;
