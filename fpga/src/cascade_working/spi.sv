@@ -13,16 +13,24 @@ module spi(
 
     logic [335:0] sreg;
     logic [8:0] bit_count;
+    logic done;     // fpag for complete transfer
 
     always_ff @(posedge sck or posedge cs) begin
         if (cs) begin
             bit_count <= 0;
             valid <= 0;
+            done <= 0;
         end else begin
-            sreg <= {sreg[334:0], sdi};
-            bit_count <= bit_count + 1;
-            if (bit_count == 335) begin 
-                valid <= 1;
+            if (!done) begin
+                sreg <= {sreg[334:0], sdi};
+
+                if (bit_count == 335) begin 
+                    valid <= 1;
+                    done <= 1;
+                end else begin 
+                    bit_count <= bit_count + 1;
+                    valid <= 0;
+                end
             end else begin
                 valid <= 0;
             end
