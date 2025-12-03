@@ -147,6 +147,7 @@ always_ff @(posedge clk) begin
         mid_reg <= 16'sh0000;
         high_reg <= 16'sh0000;
         l_r_clk_prev <= 1'b0;
+        audio_out <= 16'sh0000;
     end else begin
         l_r_clk_prev <= l_r_clk;
 
