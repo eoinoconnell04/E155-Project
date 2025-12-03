@@ -17,8 +17,6 @@ module iir_time_mux_accum(
     output logic test // y[n]
 );
 
-logic output_ready;
-
     // FSM States - expanded to 4 bits to add DONE state
     typedef enum logic [3:0] {
         IDLE      = 4'd0,

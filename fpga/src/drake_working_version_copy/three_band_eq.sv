@@ -117,6 +117,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
         .b2(LOW_B2),
         .a1(LOW_A1),
         .a2(LOW_A2),
+        .output_ready(output_ready),
         .filtered_output(low_band_out),
 .test(mac_a)
     );
@@ -132,6 +133,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
         .b2(MID_B2),
         .a1(MID_A1),
         .a2(MID_A2),
+        .output_ready(output_ready),
         .filtered_output(mid_band_out),
 .test()
     );
@@ -147,6 +149,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
         .b2(HIGH_B2),
         .a1(HIGH_A1),
         .a2(HIGH_A2),
+        .output_ready(output_ready),
         .filtered_output(high_band_out),
 .test()
     );
