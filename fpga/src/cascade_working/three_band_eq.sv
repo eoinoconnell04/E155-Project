@@ -142,25 +142,26 @@ logic signed [15:0] low_reg, mid_reg, high_reg, audio_reg;
 logic l_r_clk_prev;
 
 always_ff @(posedge clk) begin
-if (!reset) begin
-low_reg <= 16'sh0000;
-mid_reg <= 16'sh0000;
-high_reg <= 16'sh0000;
-l_r_clk_prev <= 1'b0;
-end else begin
-l_r_clk_prev <= l_r_clk;
+    if (!reset) begin
+        low_reg <= 16'sh0000;
+        mid_reg <= 16'sh0000;
+        high_reg <= 16'sh0000;
+        l_r_clk_prev <= 1'b0;
+    end else begin
+        l_r_clk_prev <= l_r_clk;
 
-// Detect any edge of l_r_clk (rising or falling)
-if (l_r_clk != l_r_clk_prev) begin
-low_reg <= low_band_out;
-mid_reg <= mid_band_out;
-high_reg <= high_band_out;
-//audio_reg <= (mid_reg >>> 1);// + (mid_reg >>> 1);
-end
-// Sum in the NEXT cycle after registers are updated
-//audio_out <= (low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
-audio_out <= filter_bypass ? high_band_out : audio_in;
-end
+        // Detect any edge of l_r_clk (rising or falling)
+        if (l_r_clk != l_r_clk_prev) begin
+            low_reg <= low_band_out;
+            mid_reg <= mid_band_out;
+            high_reg <= high_band_out;
+            //audio_reg <= (mid_reg >>> 1);// + (mid_reg >>> 1);
+        end
+        // Sum in the NEXT cycle after registers are updated
+        //audio_out <= (low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
+        //audio_out <= filter_bypass ? high_band_out : audio_in;
+        audio_out <= high_band_out;
+    end
 end
 /*
 always_comb begin
