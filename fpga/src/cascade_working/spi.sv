@@ -3,17 +3,27 @@
 // This Module holds logic to configure SPI
 // 11/03/25
 
-module aes_spi(
+module spi(
     input  logic sck,
     input  logic sdi,
-    output logic [47:0] data);
+    input  logic cs,
+    output logic [335:0] data,  // 42 bytes = 336 bits
+    output logic valid
+);
 
-    logic [47:0] sreg;
+    logic [335:0] sreg;
+    logic [8:0] bit_count;
 
-    always_ff @(posedge sck) begin
-        sreg <= {sreg[46:0], sdi};
+    always_ff @(posedge sck or posedge cs) begin
+        if (cs) begin
+            bit_count <= 0;
+            valid <= 0;
+        end else begin
+            sreg <= {sreg[334:0], sdi};
+            bit_count <= bit_count + 1;
+            if (bit_count == 335) valid <= 1;
+        end
     end
 
     assign data = sreg;
-
 endmodule
