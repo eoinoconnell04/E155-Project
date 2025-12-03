@@ -106,24 +106,6 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
         end
     end
 
-    logic signed [15:0] low_output, mid_input, mid_output, high_input;
-    logic low_output_ready, mid_input_ready, mid_output_ready, high_input_ready, high_output_ready;
-    always_ff @(posedge clk) begin
-        if (!reset) begin
-            mid_input <= 1'b0;
-            high_input <= 1'b0;
-
-            mid_input_ready <= 1'b0;;
-            high_input_ready <= 1'b0;
-        end else begin
-            mid_input <= low_band_out;
-            high_input <= mid_band_out;
-
-            mid_input_ready <= low_output_ready;
-            high_input_ready <= mid_output_ready;
-        end
-    end
-
     // Instantiate low-pass filter (processes bass frequencies)
     iir_time_mux_accum low_band_filter (
         .clk(clk),
@@ -135,7 +117,7 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
         .b2(LOW_B2),
         .a1(LOW_A1),
         .a2(LOW_A2),
-        .output_ready(low_output_ready),
+        .output_ready(output_ready),
         .filtered_output(low_band_out),
 .test(mac_a)
     );
@@ -143,15 +125,15 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
     // Instantiate band-pass filter (processes midrange frequencies)
     iir_time_mux_accum mid_band_filter (
         .clk(clk),
-        .l_r_edge(mid_input_ready),
+        .l_r_edge(l_r_edge),
         .reset(reset),
-        .latest_sample(mid_input),  // All filters get same input in parallel
+        .latest_sample(audio_in),  // All filters get same input in parallel
         .b0(MID_B0),
         .b1(MID_B1),
         .b2(MID_B2),
         .a1(MID_A1),
         .a2(MID_A2),
-        .output_ready(mid_output_ready),
+        .output_ready(output_ready),
         .filtered_output(mid_band_out),
 .test()
     );
@@ -159,15 +141,15 @@ localparam logic signed [15:0] HIGH_A2 = 16'sh0000;  // 0.0
     // Instantiate high-pass filter (processes treble frequencies)
     iir_time_mux_accum high_band_filter (
         .clk(clk),
-        .l_r_edge(high_input_ready),
+        .l_r_edge(l_r_edge),
         .reset(reset),
-        .latest_sample(high_input),  // All filters get same input in parallel
+        .latest_sample(audio_in),  // All filters get same input in parallel
         .b0(HIGH_B0),
         .b1(HIGH_B1),
         .b2(HIGH_B2),
         .a1(HIGH_A1),
         .a2(HIGH_A2),
-        .output_ready(high_output_ready),
+        .output_ready(output_ready),
         .filtered_output(high_band_out),
 .test()
     );
@@ -192,7 +174,7 @@ high_reg <= high_band_out;
 //audio_reg <= (mid_reg >>> 1);// + (mid_reg >>> 1);
 end
 // Sum in the NEXT cycle after registers are updated
-audio_out <= high_band_out;//(low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
+audio_out <= (low_reg >>> 2) + (mid_reg >>> 2) + (high_reg >>> 2);
 end
 end
 
