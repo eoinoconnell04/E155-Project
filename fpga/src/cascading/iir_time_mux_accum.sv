@@ -43,7 +43,7 @@ always_ff @(posedge clk) begin
         x_n1 <= 16'd0;
         x_n2 <= 16'd0;
         x_processing <= 16'd0;  // â† NEW
-    end else if (trigger) begin
+    end else if (trigger && state == IDLE) begin
         x_n  <= latest_sample;
         x_n1 <= x_n;
         x_n2 <= x_n1;
