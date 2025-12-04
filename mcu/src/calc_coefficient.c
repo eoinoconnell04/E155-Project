@@ -186,10 +186,9 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
     a1 /= a0;
     a2 /= a0;
     
-    // Negate a1 and a2 for FPGA format (no subtraction, only add)
-    // y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + (-a1)*y[n-1] + (-a2)*y[n-2]
-    a1 = -a1;
-    a2 = -a2;
+    // NOTE: FPGA negates a1 and a2 for us, so we send standard form
+    // Standard form: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+    // FPGA converts to: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + (-a1)*y[n-1] + (-a2)*y[n-2]
 
     return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
@@ -226,9 +225,7 @@ static BiquadQ14 mid_peaking_coeffs_q14(float pot)
     a1 /= a0;
     a2 /= a0;
     
-    // Negate a1 and a2 for FPGA format
-    a1 = -a1;
-    a2 = -a2;
+    // NOTE: FPGA negates a1 and a2 for us, so we send standard form
 
     return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
@@ -265,9 +262,7 @@ static BiquadQ14 high_shelf_coeffs_q14(float pot)
     a1 /= a0;
     a2 /= a0;
     
-    // Negate a1 and a2 for FPGA format
-    a1 = -a1;
-    a2 = -a2;
+    // NOTE: FPGA negates a1 and a2 for us, so we send standard form
 
     return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
@@ -351,16 +346,17 @@ BiquadQ14 simpleLowpass(float cutoff_hz)
 {
     // First-order lowpass filter
     // Example: simpleLowpass(5000.0f) for 5 kHz cutoff
-    // Formula: H(z) = (1-alpha) / (1 - alpha*z^-1)
+    // Standard form: H(z) = (1-alpha) / (1 - alpha*z^-1)
     
     float alpha = expf(-2.0f * M_PI * cutoff_hz / FS);
     float b0 = 1.0f - alpha;
+    float a1 = alpha;  // Standard form (FPGA will negate)
     
     BiquadQ14 q;
     q.b0 = float_to_q14(b0);
     q.b1 = 0x0000;
     q.b2 = 0x0000;
-    q.a1 = float_to_q14(alpha);  // Positive for FPGA addition
+    q.a1 = float_to_q14(a1);
     q.a2 = 0x0000;
     return q;
 }
@@ -369,15 +365,15 @@ BiquadQ14 simpleHighpass(float cutoff_hz)
 {
     // First-order highpass filter
     // Example: simpleHighpass(1000.0f) for 1 kHz cutoff
-    // Formula: H(z) = alpha * (1 - z^-1) / (1 - alpha*z^-1)
+    // Standard form: H(z) = alpha * (1 - z^-1) / (1 - alpha*z^-1)
     
     float alpha = expf(-2.0f * M_PI * cutoff_hz / FS);
     
     BiquadQ14 q;
     q.b0 = float_to_q14(alpha);
-    q.b1 = float_to_q14(-alpha);  // Negative coefficient
+    q.b1 = float_to_q14(-alpha);
     q.b2 = 0x0000;
-    q.a1 = float_to_q14(alpha);   // Positive for FPGA addition
+    q.a1 = float_to_q14(alpha);  // Standard form (FPGA will negate)
     q.a2 = 0x0000;
     return q;
 }
