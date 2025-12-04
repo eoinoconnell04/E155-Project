@@ -50,19 +50,19 @@ l_r_edge <= l_r_clk_d1 ^ l_r_clk_d2;
  
 // Shift into pipeline in WAIT1 state (after edge settles)
 logic signed [15:0] x_n, x_n1, x_n2;
-logic signed [15:0] x_processing;  // â† NEW: latched sample being processed
+logic signed [15:0] x_processing;  // Ã¢â€ Â NEW: latched sample being processed
 
 always_ff @(posedge clk) begin
     if (!reset) begin
         x_n  <= 16'd0;
         x_n1 <= 16'd0;
         x_n2 <= 16'd0;
-        x_processing <= 16'd0;  // â† NEW
+        x_processing <= 16'd0;  // Ã¢â€ Â NEW
     end else if (l_r_edge) begin
         x_n  <= latest_sample;
         x_n1 <= x_n;
         x_n2 <= x_n1;
-        x_processing <= x_n;  // â† NEW: Latch the sample we're about to process
+        x_processing <= x_n;  // Ã¢â€ Â NEW: Latch the sample we're about to process
     end
 end
     
@@ -211,6 +211,6 @@ end
         .result(mac_result)
     );
 
-assign test = mac_rst;
+assign test = output_ready;
 
 endmodule 

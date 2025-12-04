@@ -7,7 +7,7 @@ module top(input logic sck, sdi, cs,
 			output logic i2s_ws_o,
 			output logic adc_test,
 			output logic conf_en_i,
-			output logic mac_a);
+			output logic output_ready);
 
 
 logic [5:0]  conf_res_i    = 6'd24;
@@ -42,7 +42,6 @@ always_ff @(posedge lmmi_clk_i) begin
 end
 
 assign adc_test = adc_valid;
-
 logic signed [15:0] audio_out;
 assign dac_data = {8'b0, audio_out, 8'b0};
 logic signed [15:0] low_b0, low_b1, low_b2, low_a1, low_a2, mid_b0, mid_b1, mid_b2, mid_a1, mid_a2, high_b0, high_b1, high_b2, high_a1, high_a2;
@@ -80,7 +79,7 @@ three_band_eq filter(
     .high_a2(high_a2), // 0.0
     
     .audio_out(audio_out),
-    .mac_a()
+    .mac_a(output_ready)
 );
 
 lscc_i2s_codec #(
@@ -128,6 +127,7 @@ spi_top dutspitop(
 	.cs(cs),
 	.clk_in(lmmi_clk_i),
 	.rst_in(reset_n_i),
+	.output_ready(output_ready),
     // Low-pass filter coefficients - 0.5 gain
     .low_b0(low_b0),  // 0.5 in Q2.14
     .low_b1(low_b1),  // 0.0
@@ -148,7 +148,7 @@ spi_top dutspitop(
     .high_b2(high_b2), // 0.0
     .high_a1(high_a1), // 0.0
     .high_a2(high_a2), // 0.0
-	.spi_valid(mac_a));
+	.spi_valid());
 
 //assign mac_a = cs; 
 

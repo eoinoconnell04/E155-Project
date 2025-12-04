@@ -71,7 +71,7 @@ logic mac_a2, mac_a3;
         .a1(mid_a1),
         .a2(mid_a2),
         .filtered_output(mid_band_out),
-        .test()
+        .test(mac_a)
     );
     
     // Instantiate high-pass filter (processes treble frequencies)
@@ -86,7 +86,7 @@ logic mac_a2, mac_a3;
         .a1(high_a1),
         .a2(high_a2),
         .filtered_output(high_band_out),
-        .test()
+        .test(mac_a)
     );
     
 logic signed [15:0] low_reg, mid_reg, high_reg, audio_reg, prev_audio_in;

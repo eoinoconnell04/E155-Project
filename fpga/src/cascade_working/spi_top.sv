@@ -1,9 +1,10 @@
 module spi_top(
-    input  clk_in,
-    input  rst_in,
-    input  sck,
-    input  sdi,
-    input  cs,
+    input  logic clk_in,
+    input  logic rst_in,
+	input logic output_ready,
+    input  logic sck,
+    input  logic sdi,
+    input  logic cs,
     // Low-pass filter coefficients
     output logic signed [15:0] low_b0, low_b1, low_b2, low_a1, low_a2,
     // Mid-pass filter coefficients
@@ -52,6 +53,7 @@ end
     control ctrl_inst (
 		.clk(clk_in),
 		.reset(rst_in),
+		.output_ready(output_ready),
         .data(data_latched),
 		.update_en(spi_valid_sync),
         .low_b0(low_b0),
