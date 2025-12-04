@@ -38,11 +38,13 @@ while(1){
     // -----------------------------
     // Coefficient Calculation
     // -----------------------------
-    ThreeBandCoeffs coeffs = calcCoeffUpdate(
+    /*ThreeBandCoeffs coeffs = calcCoeffUpdate(
         values[2],   // low band knob
         values[1],   // mid band knob
         values[3]    // high band knob
-    );
+    ); */
+
+    ThreeBandCoeffs coeffs = simple_test_filters(0);
     
     
     // -----------------------------

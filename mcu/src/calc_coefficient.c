@@ -112,15 +112,9 @@ static inline float pot_to_gain_db(float pot)
     return -MAX_CUT_DB * (1.0f - pot);
 }
 
-static inline float db_to_amplitude_shelf(float db)
+static inline float db_to_amplitude(float db)
 {
-    // Fixed: Shelving filters use db/20, not db/40
-    return powf(10.0f, db / 20.0f);
-}
-
-static inline float db_to_amplitude_peak(float db)
-{
-    // Peaking filters use db/40 (squared amplitude)
+    // RBJ Audio EQ Cookbook uses db/40 for BOTH shelving and peaking filters
     return powf(10.0f, db / 40.0f);
 }
 
@@ -173,7 +167,7 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
         return unity_gain_biquad();
     }
     
-    float A = db_to_amplitude_shelf(gainDB);  // Fixed: use db/20 for shelving
+    float A = db_to_amplitude(gainDB);  // Use db/40 for shelving (RBJ standard)
     float w0 = 2.0f * M_PI * 400.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -213,7 +207,7 @@ static BiquadQ14 mid_peaking_coeffs_q14(float pot)
         return unity_gain_biquad();
     }
     
-    float A = db_to_amplitude_peak(gainDB);  // Peaking uses db/40
+    float A = db_to_amplitude(gainDB);  // Use db/40 for peaking (RBJ standard)
     float w0 = 2.0f * M_PI * 1000.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -252,7 +246,7 @@ static BiquadQ14 high_shelf_coeffs_q14(float pot)
         return unity_gain_biquad();
     }
     
-    float A = db_to_amplitude_shelf(gainDB);  // Fixed: use db/20 for shelving
+    float A = db_to_amplitude(gainDB);  // Use db/40 for shelving (RBJ standard)
     float w0 = 2.0f * M_PI * 2000.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -320,4 +314,121 @@ void calcCoeffGetPotValues(float *pot_low, float *pot_mid, float *pot_high)
     if (pot_low)  *pot_low  = pot_low_smooth;
     if (pot_mid)  *pot_mid  = pot_mid_smooth;
     if (pot_high) *pot_high = pot_high_smooth;
+}
+
+// -----------------------------
+// Simple Test Filters
+// -----------------------------
+
+BiquadQ14 simpleUnity(void)
+{
+    // Unity gain - passthrough (no filtering)
+    BiquadQ14 q;
+    q.b0 = 0x4000;  // 1.0
+    q.b1 = 0x0000;  // 0.0
+    q.b2 = 0x0000;  // 0.0
+    q.a1 = 0x0000;  // 0.0
+    q.a2 = 0x0000;  // 0.0
+    return q;
+}
+
+BiquadQ14 simpleAttenuator(float gain_db)
+{
+    // Simple gain reduction (no poles or zeros)
+    // Example: simpleAttenuator(-6.0f) for -6 dB
+    float gain = powf(10.0f, gain_db / 20.0f);
+    
+    BiquadQ14 q;
+    q.b0 = float_to_q14(gain);
+    q.b1 = 0x0000;
+    q.b2 = 0x0000;
+    q.a1 = 0x0000;
+    q.a2 = 0x0000;
+    return q;
+}
+
+BiquadQ14 simpleLowpass(float cutoff_hz)
+{
+    // First-order lowpass filter
+    // Example: simpleLowpass(5000.0f) for 5 kHz cutoff
+    // Formula: H(z) = (1-alpha) / (1 - alpha*z^-1)
+    
+    float alpha = expf(-2.0f * M_PI * cutoff_hz / FS);
+    float b0 = 1.0f - alpha;
+    
+    BiquadQ14 q;
+    q.b0 = float_to_q14(b0);
+    q.b1 = 0x0000;
+    q.b2 = 0x0000;
+    q.a1 = float_to_q14(alpha);  // Positive for FPGA addition
+    q.a2 = 0x0000;
+    return q;
+}
+
+BiquadQ14 simpleHighpass(float cutoff_hz)
+{
+    // First-order highpass filter
+    // Example: simpleHighpass(1000.0f) for 1 kHz cutoff
+    // Formula: H(z) = alpha * (1 - z^-1) / (1 - alpha*z^-1)
+    
+    float alpha = expf(-2.0f * M_PI * cutoff_hz / FS);
+    
+    BiquadQ14 q;
+    q.b0 = float_to_q14(alpha);
+    q.b1 = float_to_q14(-alpha);  // Negative coefficient
+    q.b2 = 0x0000;
+    q.a1 = float_to_q14(alpha);   // Positive for FPGA addition
+    q.a2 = 0x0000;
+    return q;
+}
+
+ThreeBandCoeffs simpleTestFilters(uint8_t test_number)
+{
+    ThreeBandCoeffs coeffs;
+    
+    switch (test_number) {
+        case 0:  // All unity - passthrough
+            coeffs.low  = simpleUnity();
+            coeffs.mid  = simpleUnity();
+            coeffs.high = simpleUnity();
+            break;
+            
+        case 1:  // -6 dB attenuator on all bands
+            coeffs.low  = simpleAttenuator(-6.0f);
+            coeffs.mid  = simpleAttenuator(-6.0f);
+            coeffs.high = simpleAttenuator(-6.0f);
+            break;
+            
+        case 2:  // Gentle lowpass on all bands (5 kHz)
+            coeffs.low  = simpleLowpass(5000.0f);
+            coeffs.mid  = simpleLowpass(5000.0f);
+            coeffs.high = simpleLowpass(5000.0f);
+            break;
+            
+        case 3:  // Gentle highpass on all bands (1 kHz)
+            coeffs.low  = simpleHighpass(1000.0f);
+            coeffs.mid  = simpleHighpass(1000.0f);
+            coeffs.high = simpleHighpass(1000.0f);
+            break;
+            
+        case 4:  // Very gentle lowpass on all bands (10 kHz)
+            coeffs.low  = simpleLowpass(10000.0f);
+            coeffs.mid  = simpleLowpass(10000.0f);
+            coeffs.high = simpleLowpass(10000.0f);
+            break;
+            
+        case 5:  // Mix: LP on low, unity on mid, HP on high
+            coeffs.low  = simpleLowpass(5000.0f);
+            coeffs.mid  = simpleUnity();
+            coeffs.high = simpleHighpass(1000.0f);
+            break;
+            
+        default:  // Unity for safety
+            coeffs.low  = simpleUnity();
+            coeffs.mid  = simpleUnity();
+            coeffs.high = simpleUnity();
+            break;
+    }
+    
+    return coeffs;
 }
