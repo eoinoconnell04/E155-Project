@@ -18,9 +18,9 @@ logic [31:0] adc_data;
 logic [31:0] dac_data;
 
 logic        adc_valid;         
-logic        dac_request;       
+logic        dac_request;
 
-logic [31:0] latch_data;
+logic signed [15:0] audio_in;
 
 HSOSC #(.CLKHF_DIV ("0b10")) hf_osc (
     .CLKHFPU(1'b1),
@@ -31,57 +31,61 @@ HSOSC #(.CLKHF_DIV ("0b10")) hf_osc (
 always_ff @(posedge lmmi_clk_i) begin
 	if (reset_n_i == 0) begin
 		conf_en_i  <= 1'b0;
-		latch_data <= 32'd0; 
 	end 
 	else begin 
 		conf_en_i  <= 1'b1;
-		if (adc_valid) begin 
-			latch_data <= adc_data;
-		end
 	end 
 end
 
 assign adc_test = adc_valid;
+
 logic signed [15:0] audio_out;
 assign dac_data = {8'b0, audio_out, 8'b0};
-logic signed [15:0] low_b0, low_b1, low_b2, low_a1, low_a2, mid_b0, mid_b1, mid_b2, mid_a1, mid_a2, high_b0, high_b1, high_b2, high_a1, high_a2;
-// ============================================================================
-// TEST CONFIGURATION - Change these values to test different coefficients
-// ============================================================================
-// Current: All stages at 0.5 gain = 0.125 total (should be audible but quieter)
-// Try changing these values and re-synthesizing to test different configs
 
+// I2S Package - handles ADC data latching
+I2S_package i2s_pkg (
+    .clk(lmmi_clk_i),
+    .reset_n(reset_n_i),
+    .adc_data(adc_data),
+    .adc_valid(adc_valid),
+    .audio_in(audio_in)
+);
+
+logic signed [15:0] low_b0, low_b1, low_b2, low_a1, low_a2, mid_b0, mid_b1, mid_b2, mid_a1, mid_a2, high_b0, high_b1, high_b2, high_a1, high_a2;
+
+// Three-band equalizer
 three_band_eq filter(
     .clk(lmmi_clk_i),
     .l_r_clk(i2s_ws_o),
     .reset(reset_n_i),
-    .audio_in(latch_data[23:8]),
+    .audio_in(audio_in),
     
-    // Low-pass filter coefficients - 0.5 gain
-    .low_b0(low_b0),  // 0.5 in Q2.14
-    .low_b1(low_b1),  // 0.0
-    .low_b2(low_b2),  // 0.0
-    .low_a1(low_a1),  // 0.0
-    .low_a2(low_a2),  // 0.0
+    // Low-pass filter coefficients
+    .low_b0(low_b0),
+    .low_b1(low_b1),
+    .low_b2(low_b2),
+    .low_a1(low_a1),
+    .low_a2(low_a2),
     
-    // Mid-pass filter coefficients - 0.5 gain
-    .mid_b0(mid_b0),  // 0.5 in Q2.14
-    .mid_b1(mid_b1),  // 0.0
-    .mid_b2(mid_b2),  // 0.0
-    .mid_a1(mid_a1),  // 0.0
-    .mid_a2(mid_a2),  // 0.0
+    // Mid-pass filter coefficients
+    .mid_b0(mid_b0),
+    .mid_b1(mid_b1),
+    .mid_b2(mid_b2),
+    .mid_a1(mid_a1),
+    .mid_a2(mid_a2),
     
-    // High-pass filter coefficients - 0.5 gain
-    .high_b0(high_b0), // 0.5 in Q2.14
-    .high_b1(high_b1), // 0.0
-    .high_b2(high_b2), // 0.0
-    .high_a1(high_a1), // 0.0
-    .high_a2(high_a2), // 0.0
+    // High-pass filter coefficients
+    .high_b0(high_b0),
+    .high_b1(high_b1),
+    .high_b2(high_b2),
+    .high_a1(high_a1),
+    .high_a2(high_a2),
     
     .audio_out(audio_out),
     .mac_a(output_ready)
 );
 
+// I2S Receiver
 lscc_i2s_codec #(
     .DATA_WIDTH       (24),
     .TRANSCEIVER_MODE (1)         
@@ -101,6 +105,7 @@ lscc_i2s_codec #(
     .i2s_ws_o()                     
 );
 
+// I2S Transmitter
 lscc_i2s_codec #(
     .DATA_WIDTH       (24),
     .TRANSCEIVER_MODE (0)          
@@ -120,7 +125,7 @@ lscc_i2s_codec #(
     .i2s_ws_o(i2s_ws_o)            
 );
 
-
+// SPI interface for filter coefficient updates
 spi_top dutspitop(
 	.sck(sck),
 	.sdi(sdi),
@@ -128,29 +133,29 @@ spi_top dutspitop(
 	.clk_in(lmmi_clk_i),
 	.rst_in(reset_n_i),
 	.output_ready(output_ready),
-    // Low-pass filter coefficients - 0.5 gain
-    .low_b0(low_b0),  // 0.5 in Q2.14
-    .low_b1(low_b1),  // 0.0
-    .low_b2(low_b2),  // 0.0
-    .low_a1(low_a1),  // 0.0
-    .low_a2(low_a2),  // 0.0
     
-    // Mid-pass filter coefficients - 0.5 gain
-    .mid_b0(mid_b0),  // 0.5 in Q2.14
-    .mid_b1(mid_b1),  // 0.0
-    .mid_b2(mid_b2),  // 0.0
-    .mid_a1(mid_a1),  // 0.0
-    .mid_a2(mid_a2),  // 0.0
+    // Low-pass filter coefficients
+    .low_b0(low_b0),
+    .low_b1(low_b1),
+    .low_b2(low_b2),
+    .low_a1(low_a1),
+    .low_a2(low_a2),
     
-    // High-pass filter coefficients - 0.5 gain
-    .high_b0(high_b0), // 0.5 in Q2.14
-    .high_b1(high_b1), // 0.0
-    .high_b2(high_b2), // 0.0
-    .high_a1(high_a1), // 0.0
-    .high_a2(high_a2), // 0.0
-	.spi_valid());
-
-//assign mac_a = cs; 
+    // Mid-pass filter coefficients
+    .mid_b0(mid_b0),
+    .mid_b1(mid_b1),
+    .mid_b2(mid_b2),
+    .mid_a1(mid_a1),
+    .mid_a2(mid_a2),
+    
+    // High-pass filter coefficients
+    .high_b0(high_b0),
+    .high_b1(high_b1),
+    .high_b2(high_b2),
+    .high_a1(high_a1),
+    .high_a2(high_a2),
+    
+	.spi_valid()
+);
 
 endmodule
-
