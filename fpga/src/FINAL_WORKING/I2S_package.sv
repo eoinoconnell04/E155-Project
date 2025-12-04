@@ -1,3 +1,11 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: I2S data latching wrapper
+- Latches incoming 32-bit ADC data when valid
+- Extracts 16-bit audio sample from bits [23:8]
+*/
 module I2S_package(
     input  logic        clk,
     input  logic        reset_n,

@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Top-level three-band audio equalizer system
+- I2S audio input/output with 24-bit codec
+- SPI interface for real-time coefficient updates
+- Three cascaded biquad IIR filters with dynamic coefficients
+*/
+
 module top(input logic sck, sdi, cs,
 			input  logic reset_n_i, 
 			input  logic i2s_sd_i,

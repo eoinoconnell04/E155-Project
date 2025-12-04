@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Filter coefficient management with safe frame-boundary updates
+- Stages incoming SPI coefficient data
+- Commits coefficients only at safe sample boundaries (output_ready)
+- Prevents audio artifacts from mid-frame coefficient changes
+*/
+
 module control(
     input  logic              clk,
     input  logic              reset,          // active low

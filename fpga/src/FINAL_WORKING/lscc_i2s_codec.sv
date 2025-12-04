@@ -1,3 +1,14 @@
+/*
+Authors: Lattice Semiconductor (original)
+         Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Lattice I2S codec for audio transceiver
+- Configurable data width (default 24-bit)
+- Master mode clock generation
+- Supports both transmit and receive modes
+*/
+
 module lscc_i2s_codec #
 // -----------------------------------------------------------------------------
 // Module Parameters

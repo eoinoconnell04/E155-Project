@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: SPI top-level integration module
+- Clock domain crossing from SPI to system clock
+- Synchronizes valid signal and coefficient data
+- Interfaces with control module for safe coefficient updates
+*/
+
 module spi_top(
     input  logic clk_in,
     input  logic rst_in,

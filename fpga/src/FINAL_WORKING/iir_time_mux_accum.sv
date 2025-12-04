@@ -1,11 +1,13 @@
 /*
-Author: Eoin O'Connell
-Email: eoconnell@hmc.edu
-Date: Nov. 19, 2025
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
 Module Function: 16-bit biquad IIR filter with time-multiplexed DSP slice
-Coefficients: Q2.14 format
-Inputs/outputs: 16-bit signed audio samples
+- Coefficients in Q2.14 fixed-point format
+- Time-multiplexed MAC operations for b0, b1, b2, a1, a2 terms
+- FSM-controlled sequential multiply-accumulate
 */
+
 module iir_time_mux_accum(
     input  logic        clk,         // High speed system clock
     input  logic        l_r_clk,     // Left right select (new sample on every edge)

@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Testbench for top-level equalizer system
+- Tests SPI coefficient transmission
+- Verifies unity and half-gain configurations
+- Provides basic I2S input stimulus
+*/
+
 `timescale 1ns/1ps
 
 module top_tb();

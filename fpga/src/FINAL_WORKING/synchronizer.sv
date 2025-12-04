@@ -1,9 +1,11 @@
 /*
-Author: Eoin O'Connell
-Email: eoconnell@hmc.edu
-Date: Sep. 15, 2025
-Module Function: This module is a syncronizer that takes async inputs and uses two flip flops to syncronize it.
-Parameter: NUM_BITS: width of syncronizer
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Multi-bit synchronizer for clock domain crossing
+- Two-stage flip-flop synchronizer
+- Parameterizable width (default 4 bits)
+- Reduces metastability risk for asynchronous signals
 */
 
 module synchronizer 

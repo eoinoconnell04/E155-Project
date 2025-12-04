@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: Wrapper for Lattice MAC16 DSP primitive
+- 16x16 signed multiply with accumulation
+- Input registers enabled on A and B ports
+- Q2.14 fixed-point arithmetic support
+*/
+
 module MAC16_wrapper_accum (
     input  logic               clk,
     input  logic               reset,

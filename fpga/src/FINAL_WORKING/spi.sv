@@ -1,3 +1,13 @@
+/*
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
+Module Function: SPI receiver for 336-bit coefficient frames
+- Shifts in filter coefficients serially
+- Asserts valid pulse when complete frame received
+- Provides stable output buffer for clock domain crossing
+*/
+
 module aes_spi(
     input  logic sck,
     input  logic reset_n,

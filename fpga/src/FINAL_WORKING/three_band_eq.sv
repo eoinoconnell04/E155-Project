@@ -1,7 +1,7 @@
 /*
-Author: Eoin O'Connell
-Email: eoconnell@hmc.edu
-Date: Nov. 19, 2025
+Authors: Eoin O'Connell (eoconnell@hmc.edu)
+         Drake Gonzales (drgonzales@g.hmc.edu)
+Date: Dec. 4, 2025
 Module Function: 3-band equalizer using cascaded biquad IIR filters
 - Processes audio through three sequential filter stages
 - Coefficients in Q2.14 fixed-point format
