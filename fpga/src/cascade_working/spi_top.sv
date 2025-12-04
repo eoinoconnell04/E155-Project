@@ -36,20 +36,24 @@ module spi_top(
         .sync_output(spi_valid_sync)
     );
 
-    // Latch the data when valid is detected
-    always_ff @(posedge clk_in) begin
-        if (rst_in ==0) begin
-            data_latched <= 0;
-        end else begin
-            if (spi_valid_sync) begin
-                data_latched <= spi_data;  // Latch data when valid
-            end
-        end
-    end
+logic [335:0] spi_data_sync1, spi_data_sync2;
+
+always_ff @(posedge clk_in) begin
+    spi_data_sync1 <= spi_data;
+    spi_data_sync2 <= spi_data_sync1;
+end
+
+always_ff @(posedge clk_in) begin
+    if (spi_valid_sync)
+        data_latched <= spi_data_sync2;
+end
 
     // Controller instance to unpack the data
     control ctrl_inst (
+		.clk(clk_in),
+		.reset(rst_in),
         .data(data_latched),
+		.update_en(spi_valid_sync),
         .low_b0(low_b0),
         .low_b1(low_b1),
         .low_b2(low_b2),
