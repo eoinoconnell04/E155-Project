@@ -339,6 +339,234 @@ module tb_three_band_eq_coeff_test;
         send_test_signal(100, 1000.0, 0.5);
         print_results("All stages 1.0 gain");
         
+        // TEST 10: b0 = 0.5 (0x2000) for all stages
+        test_num = 10;
+        set_coefficients(
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All b0 = 0.5 (cascade gain = 0.125)");
+        
+        // TEST 11: b0 = 0.25 (0x1000) for all stages
+        test_num = 11;
+        set_coefficients(
+            16'sh1000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh1000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh1000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All b0 = 0.25 (cascade gain = 0.015625)");
+        
+        // TEST 12: b0 = 1.5 (0x6000) for all stages
+        test_num = 12;
+        set_coefficients(
+            16'sh6000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh6000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh6000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All b0 = 1.5 (cascade gain = 3.375)");
+        
+        // TEST 13: First stage only non-unity (b0=0.5), others unity
+        test_num = 13;
+        set_coefficients(
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Only low stage at 0.5 gain");
+        
+        // TEST 14: Last stage only non-unity (b0=0.5), others unity
+        test_num = 14;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Only high stage at 0.5 gain");
+        
+        // TEST 15: Simple FIR filter (b0=0.5, b1=0.5)
+        test_num = 15;
+        set_coefficients(
+            16'sh2000, 16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: FIR with b0=b1=0.5");
+        
+        // TEST 16: Simple FIR filter (b0=0.33, b1=0.33, b2=0.33)
+        test_num = 16;
+        set_coefficients(
+            16'sh1555, 16'sh1555, 16'sh1556, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: FIR averaging filter");
+        
+        // TEST 17: Small feedback coefficient a1
+        test_num = 17;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh1000, 16'sh0000,  // a1=0.25
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: a1=0.25 feedback");
+        
+        // TEST 18: Larger feedback coefficient a1
+        test_num = 18;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh3000, 16'sh0000,  // a1=0.75
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: a1=0.75 feedback");
+        
+        // TEST 19: Negative feedback coefficient
+        test_num = 19;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, -16'sh2000, 16'sh0000,  // a1=-0.5
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: a1=-0.5 feedback");
+        
+        // TEST 20: Both a1 and a2 feedback
+        test_num = 20;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh2000, 16'sh1000,  // a1=0.5, a2=0.25
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Low stage: a1=0.5, a2=0.25 feedback");
+        
+        // TEST 21: Typical lowpass Butterworth (500Hz @ 48kHz)
+        test_num = 21;
+        set_coefficients(
+            16'sh009D, 16'sh013A, 16'sh009D, -16'sh6F02, 16'sh2D7E,  // Butterworth lowpass
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 100.0, 0.5);
+        print_results("Butterworth lowpass 500Hz with 100Hz input (should pass)");
+        
+        test_num = 22;
+        send_test_signal(100, 5000.0, 0.5);
+        print_results("Butterworth lowpass 500Hz with 5kHz input (should attenuate)");
+        
+        // TEST 23: Highpass filter (simple 1-pole)
+        test_num = 23;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh3000, -16'sh3000, 16'sh0000, 16'sh2000, 16'sh0000  // Simple highpass
+        );
+        send_test_signal(100, 100.0, 0.5);
+        print_results("Simple highpass with 100Hz (should attenuate)");
+        
+        test_num = 24;
+        send_test_signal(100, 10000.0, 0.5);
+        print_results("Simple highpass with 10kHz (should pass)");
+        
+        // TEST 25: Very small coefficients
+        test_num = 25;
+        set_coefficients(
+            16'sh0100, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // b0 = 0.015625
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Very small b0 (0.015625)");
+        
+        // TEST 26: Test with DC to see steady-state behavior
+        test_num = 26;
+        set_coefficients(
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 0.0, 0.5);  // DC input
+        print_results("Half gain (0.5^3=0.125) with DC input");
+        
+        // TEST 27: Alternating gains to isolate which stage has issues
+        test_num = 27;
+        set_coefficients(
+            16'sh3000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // 0.75
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // 1.0
+            16'sh5555, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000   // 1.333
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Mixed gains: 0.75 * 1.0 * 1.333 = 1.0");
+        
+        // TEST 28: Maximum positive b0 values
+        test_num = 28;
+        set_coefficients(
+            16'sh7FFF, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Max b0 (1.999) in first stage only");
+        
+        // TEST 29: All max b0 (should overflow/clip heavily)
+        test_num = 29;
+        set_coefficients(
+            16'sh7FFF, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh7FFF, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh7FFF, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.1);  // Smaller input to avoid overflow
+        print_results("All max b0 (expect clipping/overflow)");
+        
+        // TEST 30: Negative b0 (phase inversion)
+        test_num = 30;
+        set_coefficients(
+            -16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Negative b0 in first stage (phase invert)");
+        
+        // TEST 31: Test bit extraction with various magnitudes
+        test_num = 31;
+        set_coefficients(
+            16'sh0800, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // 0.125
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("b0 = 0.125 in first stage");
+        
+        // TEST 32: All stages with b1 non-zero (1-sample delay)
+        test_num = 32;
+        set_coefficients(
+            16'sh2000, 16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh2000, 16'sh2000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All stages: b0=b1=0.5 (moving average)");
+        
+        // TEST 33: High-frequency oscillation test with feedback
+        test_num = 33;
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, -16'sh3800, 16'sh0000,  // a1=-0.875
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Negative feedback a1=-0.875 (potential oscillation)");
+        
         // Summary
         $display("\n========================================");
         $display("TEST SUMMARY");
