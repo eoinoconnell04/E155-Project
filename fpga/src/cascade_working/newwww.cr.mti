@@ -1,0 +1,15 @@
+C:/Users/eoconnell/E155-Project/fpga/src/cascade_working/MAC16_wrapper_accum.sv {1 {vlog -work work -vopt -sv -stats=none C:/Users/eoconnell/E155-Project/fpga/src/cascade_working/MAC16_wrapper_accum.sv
+Questa Lattice OEM Edition-64 vlog 2024.2 Compiler 2024.05 May 20 2024
+-- Compiling module MAC16_wrapper_accum
+
+Top level modules:
+	MAC16_wrapper_accum
+
+} {} {}} C:/Users/eoconnell/E155-Project/fpga/src/cascade_working/newtest.sv {1 {vlog -work work -vopt -sv -stats=none C:/Users/eoconnell/E155-Project/fpga/src/cascade_working/newtest.sv
+Questa Lattice OEM Edition-64 vlog 2024.2 Compiler 2024.05 May 20 2024
+-- Compiling module test1
+
+Top level modules:
+	test1
+
+} {} {}}
