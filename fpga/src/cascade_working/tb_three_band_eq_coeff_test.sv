@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module tb_three_band_eq_cascade;
+module tb_three_band_eq_coeff_test;
 
     // Parameters
     parameter CLK_PERIOD = 20;  // 50MHz clock (matches your HSOSC)
