@@ -44,8 +44,9 @@ while(1){
         values[3]    // high band knob
     ); */
 
-    ThreeBandCoeffs coeffs = simpleTestFilters(0);
-    
+    //ThreeBandCoeffs coeffs = simpleTestFilters(0);
+    ThreeBandCoeffs coeffs = calcCoeffUpdate(values[2], values[1], values[3]);
+
     
     // -----------------------------
     // SPI OUTPUT
