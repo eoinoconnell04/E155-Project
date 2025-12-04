@@ -54,4 +54,48 @@ ThreeBandCoeffs calcCoeffUpdate(uint16_t adc_low, uint16_t adc_mid, uint16_t adc
  */
 void calcCoeffGetPotValues(float *pot_low, float *pot_mid, float *pot_high);
 
+// -----------------------------
+// Simple Test Filters
+// -----------------------------
+
+/**
+ * @brief Unity gain filter (passthrough, no filtering)
+ * @return BiquadQ14 with b0=1.0, all others=0
+ */
+BiquadQ14 simpleUnity(void);
+
+/**
+ * @brief Simple attenuator (constant gain, all frequencies)
+ * @param gain_db Gain in dB (e.g., -6.0 for half volume)
+ * @return BiquadQ14 with only b0 set to the gain value
+ */
+BiquadQ14 simpleAttenuator(float gain_db);
+
+/**
+ * @brief Simple first-order lowpass filter
+ * @param cutoff_hz Cutoff frequency in Hz (e.g., 5000.0 for 5 kHz)
+ * @return BiquadQ14 with b0 and a1 set for lowpass
+ */
+BiquadQ14 simpleLowpass(float cutoff_hz);
+
+/**
+ * @brief Simple first-order highpass filter
+ * @param cutoff_hz Cutoff frequency in Hz (e.g., 1000.0 for 1 kHz)
+ * @return BiquadQ14 with b0, b1, and a1 set for highpass
+ */
+BiquadQ14 simpleHighpass(float cutoff_hz);
+
+/**
+ * @brief Get predefined simple test filter sets
+ * @param test_number Test configuration (0-5):
+ *   0: All unity (passthrough)
+ *   1: -6 dB attenuator on all bands
+ *   2: Gentle lowpass (5 kHz) on all bands
+ *   3: Gentle highpass (1 kHz) on all bands
+ *   4: Very gentle lowpass (10 kHz) on all bands
+ *   5: Mix: LP on low, unity on mid, HP on high
+ * @return ThreeBandCoeffs with test configuration
+ */
+ThreeBandCoeffs simpleTestFilters(uint8_t test_number);
+
 #endif // CALC_COEFFICIENT_H
