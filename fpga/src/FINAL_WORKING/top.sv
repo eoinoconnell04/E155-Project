@@ -6,20 +6,13 @@ module top(input logic sck, sdi, cs,
 			output logic i2s_sck_o,        
 			output logic i2s_ws_o,
 			output logic adc_test,
-			output logic conf_en_i,
 			output logic output_ready);
 
-
-logic [5:0]  conf_res_i    = 6'd24;
-logic [9:0]  conf_ratio_i  = 10'd4;
-logic        conf_swap_i   = 1'b0;
-
+// Internal signals
 logic [31:0] adc_data;           
 logic [31:0] dac_data;
-
 logic        adc_valid;         
 logic        dac_request;
-
 logic signed [15:0] audio_in;
 
 HSOSC #(.CLKHF_DIV ("0b10")) hf_osc (
@@ -27,15 +20,6 @@ HSOSC #(.CLKHF_DIV ("0b10")) hf_osc (
     .CLKHFEN(1'b1),
     .CLKHF(lmmi_clk_i)
 );
-
-always_ff @(posedge lmmi_clk_i) begin
-	if (reset_n_i == 0) begin
-		conf_en_i  <= 1'b0;
-	end 
-	else begin 
-		conf_en_i  <= 1'b1;
-	end 
-end
 
 assign adc_test = adc_valid;
 
@@ -92,10 +76,10 @@ lscc_i2s_codec #(
 ) I2S_RX (
     .reset_n_i(reset_n_i),
     .lmmi_clk_i(lmmi_clk_i),
-    .conf_res_i(conf_res_i),
-    .conf_ratio_i(conf_ratio_i),
-    .conf_swap_i(conf_swap_i),
-    .conf_en_i(conf_en_i),
+    .conf_res_i(6'd24),
+    .conf_ratio_i(10'd4),
+    .conf_swap_i(1'b0),
+    .conf_en_i(reset_n_i),
     .i2s_sd_i(i2s_sd_i),           
     .sample_dat_i(32'h0),           
     .sample_dat_o(adc_data),       
@@ -112,10 +96,10 @@ lscc_i2s_codec #(
 ) I2S_TX (
     .reset_n_i(reset_n_i),
     .lmmi_clk_i(lmmi_clk_i),
-    .conf_res_i(conf_res_i),
-    .conf_ratio_i(conf_ratio_i),
-    .conf_swap_i(conf_swap_i),
-    .conf_en_i(conf_en_i),
+    .conf_res_i(6'd24),
+    .conf_ratio_i(10'd4),
+    .conf_swap_i(1'b0),
+    .conf_en_i(reset_n_i),
     .i2s_sd_i(1'b0),                
     .sample_dat_i(dac_data),        
     .sample_dat_o(),               
