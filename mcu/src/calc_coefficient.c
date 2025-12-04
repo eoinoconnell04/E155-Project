@@ -1,5 +1,6 @@
 // calc_coefficient.c
 // Coefficient calculation with moving average filtering for three-band equalizer
+// CORRECTED VERSION
 
 #include "calc_coefficient.h"
 #include <math.h>
@@ -8,7 +9,7 @@
 // Configuration
 // -----------------------------
 
-#define FS 48000.0f
+#define FS 63000.0f  // Fixed: actual sample rate is 63 kHz (was 48 kHz)
 #define Q  0.707f
 #define MAX_CUT_DB 15.0f
 
@@ -20,6 +21,9 @@
 // ADC configuration
 #define ADC_MAX 4095.0f
 #define ADC_THRESHOLD 3850.0f  // Values above this are treated as max (1.0)
+
+// Unity gain detection threshold (0.1 dB = essentially flat)
+#define UNITY_GAIN_THRESHOLD_DB 0.1f
 
 // Moving average filter
 #define MA_SIZE 5
@@ -108,8 +112,15 @@ static inline float pot_to_gain_db(float pot)
     return -MAX_CUT_DB * (1.0f - pot);
 }
 
-static inline float db_to_amplitude(float db)
+static inline float db_to_amplitude_shelf(float db)
 {
+    // Fixed: Shelving filters use db/20, not db/40
+    return powf(10.0f, db / 20.0f);
+}
+
+static inline float db_to_amplitude_peak(float db)
+{
+    // Peaking filters use db/40 (squared amplitude)
     return powf(10.0f, db / 40.0f);
 }
 
@@ -137,6 +148,18 @@ static inline BiquadQ14 biquad_float_to_q14(float b0, float b1, float b2,
     return q;
 }
 
+static inline BiquadQ14 unity_gain_biquad(void)
+{
+    // Unity gain: b0 = 1.0 (0x4000 in Q2.14), all others = 0
+    BiquadQ14 q;
+    q.b0 = 0x4000;  // 1.0 in Q2.14
+    q.b1 = 0x0000;
+    q.b2 = 0x0000;
+    q.a1 = 0x0000;
+    q.a2 = 0x0000;
+    return q;
+}
+
 // -----------------------------
 // Low-Shelf (Q2.14 Output)
 // -----------------------------
@@ -144,7 +167,13 @@ static inline BiquadQ14 biquad_float_to_q14(float b0, float b1, float b2,
 static BiquadQ14 low_shelf_coeffs_q14(float pot)
 {
     float gainDB = pot_to_gain_db(pot);
-    float A = db_to_amplitude(gainDB);
+    
+    // If near unity gain, return bypass filter
+    if (fabsf(gainDB) < UNITY_GAIN_THRESHOLD_DB) {
+        return unity_gain_biquad();
+    }
+    
+    float A = db_to_amplitude_shelf(gainDB);  // Fixed: use db/20 for shelving
     float w0 = 2.0f * M_PI * 400.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -156,7 +185,19 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
     float a1 =   -2*((A-1) + (A+1)*cosw0);
     float a2 =        (A+1) + (A-1)*cosw0 - 2*sqrtf(A)*alpha;
 
-    return biquad_float_to_q14(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
+    // Normalize by a0
+    b0 /= a0;
+    b1 /= a0;
+    b2 /= a0;
+    a1 /= a0;
+    a2 /= a0;
+    
+    // Negate a1 and a2 for FPGA format (no subtraction, only add)
+    // y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + (-a1)*y[n-1] + (-a2)*y[n-2]
+    a1 = -a1;
+    a2 = -a2;
+
+    return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
 
 // -----------------------------
@@ -166,7 +207,13 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
 static BiquadQ14 mid_peaking_coeffs_q14(float pot)
 {
     float gainDB = pot_to_gain_db(pot);
-    float A = db_to_amplitude(gainDB);
+    
+    // If near unity gain, return bypass filter
+    if (fabsf(gainDB) < UNITY_GAIN_THRESHOLD_DB) {
+        return unity_gain_biquad();
+    }
+    
+    float A = db_to_amplitude_peak(gainDB);  // Peaking uses db/40
     float w0 = 2.0f * M_PI * 1000.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -178,7 +225,18 @@ static BiquadQ14 mid_peaking_coeffs_q14(float pot)
     float a1 = -2*cosw0;
     float a2 = 1 - alpha/A;
 
-    return biquad_float_to_q14(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
+    // Normalize by a0
+    b0 /= a0;
+    b1 /= a0;
+    b2 /= a0;
+    a1 /= a0;
+    a2 /= a0;
+    
+    // Negate a1 and a2 for FPGA format
+    a1 = -a1;
+    a2 = -a2;
+
+    return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
 
 // -----------------------------
@@ -188,7 +246,13 @@ static BiquadQ14 mid_peaking_coeffs_q14(float pot)
 static BiquadQ14 high_shelf_coeffs_q14(float pot)
 {
     float gainDB = pot_to_gain_db(pot);
-    float A = db_to_amplitude(gainDB);
+    
+    // If near unity gain, return bypass filter
+    if (fabsf(gainDB) < UNITY_GAIN_THRESHOLD_DB) {
+        return unity_gain_biquad();
+    }
+    
+    float A = db_to_amplitude_shelf(gainDB);  // Fixed: use db/20 for shelving
     float w0 = 2.0f * M_PI * 2000.0f / FS;
     float alpha = sinf(w0) / (2.0f * Q);
     float cosw0 = cosf(w0);
@@ -200,7 +264,18 @@ static BiquadQ14 high_shelf_coeffs_q14(float pot)
     float a1 =    2*((A-1) - (A+1)*cosw0);
     float a2 =        (A+1) - (A-1)*cosw0 - 2*sqrtf(A)*alpha;
 
-    return biquad_float_to_q14(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
+    // Normalize by a0
+    b0 /= a0;
+    b1 /= a0;
+    b2 /= a0;
+    a1 /= a0;
+    a2 /= a0;
+    
+    // Negate a1 and a2 for FPGA format
+    a1 = -a1;
+    a2 = -a2;
+
+    return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
 
 // -----------------------------
