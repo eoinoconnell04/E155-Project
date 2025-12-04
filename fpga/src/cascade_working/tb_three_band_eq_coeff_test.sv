@@ -1,70 +1,75 @@
 `timescale 1ns / 1ps
 
-module tb_three_band_eq_coeff_test;
+module tb_three_band_eq_cascade;
 
     // Parameters
-    parameter CLK_PERIOD = 20;  // 50MHz clock
+    parameter CLK_PERIOD = 20;  // 50MHz clock (matches your HSOSC)
     parameter SAMPLE_RATE = 48000;
-    parameter CLK_PER_SAMPLE = 50000000 / SAMPLE_RATE;  // ~1042 clocks per sample
+    parameter real PI = 3.14159265359;
     
     // Testbench signals
-    reg clk;
-    reg rst_n;
-    reg signed [23:0] audio_in;
-    reg audio_valid;
-    wire signed [23:0] audio_out;
-    wire audio_out_valid;
+    logic clk;
+    logic l_r_clk;
+    logic reset;
+    logic signed [15:0] audio_in;
+    logic signed [15:0] audio_out;
+    logic mac_a;
     
-    // Coefficient registers (adjust bit widths to match your design)
-    reg signed [17:0] b0_low, b1_low, b2_low;
-    reg signed [17:0] a1_low, a2_low;
-    reg signed [17:0] b0_mid, b1_mid, b2_mid;
-    reg signed [17:0] a1_mid, a2_mid;
-    reg signed [17:0] b0_high, b1_high, b2_high;
-    reg signed [17:0] a1_high, a2_high;
-    reg signed [7:0] gain_low, gain_mid, gain_high;
+    // Coefficient registers (Q2.14 format)
+    logic signed [15:0] low_b0, low_b1, low_b2, low_a1, low_a2;
+    logic signed [15:0] mid_b0, mid_b1, mid_b2, mid_a1, mid_a2;
+    logic signed [15:0] high_b0, high_b1, high_b2, high_a1, high_a2;
     
     // Test tracking
     integer test_num;
     integer sample_count;
     integer error_count;
-    real max_output;
-    real min_output;
-    real avg_output;
-    real sum_output;
-    integer silent_samples;
-    integer clipped_samples;
+    real max_output, min_output, sum_output, avg_output;
+    integer silent_samples, clipped_samples;
     
-    // DUT instantiation (adjust port names to match your design)
+    // L/R clock generation (48kHz sample rate from 50MHz clock)
+    integer lr_clk_counter;
+    localparam LR_CLK_DIV = 521;  // 50MHz / 48kHz / 2 ≈ 520.8
+    
+    always_ff @(posedge clk) begin
+        if (!reset) begin
+            lr_clk_counter <= 0;
+            l_r_clk <= 0;
+        end else begin
+            lr_clk_counter <= lr_clk_counter + 1;
+            if (lr_clk_counter >= LR_CLK_DIV) begin
+                lr_clk_counter <= 0;
+                l_r_clk <= ~l_r_clk;  // Toggle every 521 clocks
+            end
+        end
+    end
+    
+    // DUT instantiation
     three_band_eq dut (
         .clk(clk),
-        .rst_n(rst_n),
+        .l_r_clk(l_r_clk),
+        .reset(reset),
         .audio_in(audio_in),
-        .audio_valid(audio_valid),
+        // Low-pass filter coefficients
+        .low_b0(low_b0),
+        .low_b1(low_b1),
+        .low_b2(low_b2),
+        .low_a1(low_a1),
+        .low_a2(low_a2),
+        // Mid-pass filter coefficients
+        .mid_b0(mid_b0),
+        .mid_b1(mid_b1),
+        .mid_b2(mid_b2),
+        .mid_a1(mid_a1),
+        .mid_a2(mid_a2),
+        // High-pass filter coefficients
+        .high_b0(high_b0),
+        .high_b1(high_b1),
+        .high_b2(high_b2),
+        .high_a1(high_a1),
+        .high_a2(high_a2),
         .audio_out(audio_out),
-        .audio_out_valid(audio_out_valid),
-        // Low band coefficients
-        .b0_low(b0_low),
-        .b1_low(b1_low),
-        .b2_low(b2_low),
-        .a1_low(a1_low),
-        .a2_low(a2_low),
-        // Mid band coefficients
-        .b0_mid(b0_mid),
-        .b1_mid(b1_mid),
-        .b2_mid(b2_mid),
-        .a1_mid(a1_mid),
-        .a2_mid(a2_mid),
-        // High band coefficients
-        .b0_high(b0_high),
-        .b1_high(b1_high),
-        .b2_high(b2_high),
-        .a1_high(a1_high),
-        .a2_high(a2_high),
-        // Gains
-        .gain_low(gain_low),
-        .gain_mid(gain_mid),
-        .gain_high(gain_high)
+        .mac_a(mac_a)
     );
     
     // Clock generation
@@ -73,11 +78,19 @@ module tb_three_band_eq_coeff_test;
         forever #(CLK_PERIOD/2) clk = ~clk;
     end
     
-    // Convert fixed-point output to real for analysis
-    function real fixed_to_real;
-        input signed [23:0] fixed_val;
+    // Convert Q2.14 to real
+    function real q214_to_real;
+        input signed [15:0] fixed_val;
         begin
-            fixed_to_real = $itor(fixed_val) / (2.0**23);
+            q214_to_real = $itor(fixed_val) / 16384.0;  // 2^14
+        end
+    endfunction
+    
+    // Convert real to Q2.14
+    function logic signed [15:0] real_to_q214;
+        input real val;
+        begin
+            real_to_q214 = $rtoi(val * 16384.0);
         end
     endfunction
     
@@ -95,47 +108,75 @@ module tb_three_band_eq_coeff_test;
     
     // Task to update statistics
     task update_stats;
-        input signed [23:0] sample;
+        input signed [15:0] sample;
         real sample_real;
         begin
-            sample_real = fixed_to_real(sample);
+            sample_real = q214_to_real(sample);
             sample_count = sample_count + 1;
             sum_output = sum_output + sample_real;
             
             if (sample_real > max_output) max_output = sample_real;
             if (sample_real < min_output) min_output = sample_real;
             
-            // Check for silence (< -60dB)
-            if (sample > -8388 && sample < 8388) silent_samples = silent_samples + 1;
+            // Check for silence (< -60dB, approx < 0.001)
+            if (sample > -33 && sample < 33) silent_samples = silent_samples + 1;
             
-            // Check for clipping (> 0.9 or < -0.9)
-            if (sample_real > 0.9 || sample_real < -0.9) clipped_samples = clipped_samples + 1;
+            // Check for clipping/overflow
+            if (sample_real > 1.8 || sample_real < -1.8) clipped_samples = clipped_samples + 1;
+        end
+    endtask
+    
+    // Task to print coefficient values
+    task print_coeffs;
+        input [200*8:1] band_name;
+        input signed [15:0] b0, b1, b2, a1, a2;
+        begin
+            $display("  %s: b0=%f(%h) b1=%f(%h) b2=%f(%h) a1=%f(%h) a2=%f(%h)",
+                band_name,
+                q214_to_real(b0), b0,
+                q214_to_real(b1), b1,
+                q214_to_real(b2), b2,
+                q214_to_real(a1), a1,
+                q214_to_real(a2), a2);
         end
     endtask
     
     // Task to print test results
     task print_results;
         input [200*8:1] test_name;
+        real theoretical_cascade_gain;
         begin
             avg_output = sum_output / sample_count;
             
+            // Calculate theoretical cascade gain
+            theoretical_cascade_gain = q214_to_real(low_b0) * q214_to_real(mid_b0) * q214_to_real(high_b0);
+            
             $display("========================================");
             $display("Test %0d: %s", test_num, test_name);
+            print_coeffs("Low ", low_b0, low_b1, low_b2, low_a1, low_a2);
+            print_coeffs("Mid ", mid_b0, mid_b1, mid_b2, mid_a1, mid_a2);
+            print_coeffs("High", high_b0, high_b1, high_b2, high_a1, high_a2);
+            $display("  Theoretical cascade gain (b0*b0*b0): %f (%.1f dB)", 
+                theoretical_cascade_gain, 
+                20.0*$log10(theoretical_cascade_gain + 1e-10));
+            $display("----------------------------------------");
             $display("Samples processed: %0d", sample_count);
             $display("Max output: %f (%.1f dB)", max_output, 20.0*$log10($abs(max_output)+1e-10));
             $display("Min output: %f (%.1f dB)", min_output, 20.0*$log10($abs(min_output)+1e-10));
             $display("Avg output: %f", avg_output);
-            $display("Silent samples (< -60dB): %0d (%.1f%%)", silent_samples, 100.0*silent_samples/sample_count);
-            $display("Clipped samples (> 0.9): %0d (%.1f%%)", clipped_samples, 100.0*clipped_samples/sample_count);
+            $display("Silent samples (< 0.002): %0d (%.1f%%)", silent_samples, 100.0*silent_samples/sample_count);
+            $display("Overflow samples (> 1.8): %0d (%.1f%%)", clipped_samples, 100.0*clipped_samples/sample_count);
             
             // Analyze results
             if (silent_samples == sample_count) begin
-                $display("FAILURE: All output is silent!");
+                $display("*** FAILURE: All output is SILENT! ***");
                 error_count = error_count + 1;
+            end else if (silent_samples > sample_count * 0.9) begin
+                $display("*** WARNING: Output extremely weak (>90%% near-silent) ***");
             end else if (clipped_samples > sample_count/10) begin
-                $display("WARNING: High clipping rate (>10%%)");
+                $display("*** WARNING: High overflow rate (>10%%) ***");
             end else if (max_output < 0.01 && min_output > -0.01) begin
-                $display("WARNING: Very low output level");
+                $display("*** WARNING: Very low output level ***");
             end else begin
                 $display("PASS: Output appears normal");
             end
@@ -143,200 +184,160 @@ module tb_three_band_eq_coeff_test;
         end
     endtask
     
-    // Task to apply coefficients
+    // Task to set coefficients
     task set_coefficients;
-        input signed [17:0] b0_l, b1_l, b2_l, a1_l, a2_l;
-        input signed [17:0] b0_m, b1_m, b2_m, a1_m, a2_m;
-        input signed [17:0] b0_h, b1_h, b2_h, a1_h, a2_h;
-        input signed [7:0] g_l, g_m, g_h;
+        input signed [15:0] l_b0, l_b1, l_b2, l_a1, l_a2;
+        input signed [15:0] m_b0, m_b1, m_b2, m_a1, m_a2;
+        input signed [15:0] h_b0, h_b1, h_b2, h_a1, h_a2;
         begin
-            b0_low = b0_l; b1_low = b1_l; b2_low = b2_l;
-            a1_low = a1_l; a2_low = a2_l;
-            
-            b0_mid = b0_m; b1_mid = b1_m; b2_mid = b2_m;
-            a1_mid = a1_m; a2_mid = a2_m;
-            
-            b0_high = b0_h; b1_high = b1_h; b2_high = b2_h;
-            a1_high = a1_h; a2_high = a2_h;
-            
-            gain_low = g_l;
-            gain_mid = g_m;
-            gain_high = g_h;
-            
-            $display("Coefficients set:");
-            $display("  Low:  b0=%h b1=%h b2=%h a1=%h a2=%h gain=%h", b0_l, b1_l, b2_l, a1_l, a2_l, g_l);
-            $display("  Mid:  b0=%h b1=%h b2=%h a1=%h a2=%h gain=%h", b0_m, b1_m, b2_m, a1_m, a2_m, g_m);
-            $display("  High: b0=%h b1=%h b2=%h a1=%h a2=%h gain=%h", b0_h, b1_h, b2_h, a1_h, a2_h, g_h);
+            low_b0 = l_b0; low_b1 = l_b1; low_b2 = l_b2;
+            low_a1 = l_a1; low_a2 = l_a2;
+            mid_b0 = m_b0; mid_b1 = m_b1; mid_b2 = m_b2;
+            mid_a1 = m_a1; mid_a2 = m_a2;
+            high_b0 = h_b0; high_b1 = h_b1; high_b2 = h_b2;
+            high_a1 = h_a1; high_a2 = h_a2;
         end
     endtask
     
-    // Task to send test signal
+    // Task to send test signal and wait for l_r_clk edges
     task send_test_signal;
         input integer num_samples;
-        input [200*8:1] signal_type;
-        integer i, j;
+        input real frequency_hz;
+        input real amplitude;
+        integer i;
+        real phase;
         real sample_val;
+        logic last_l_r_clk;
         begin
             reset_stats();
+            phase = 0.0;
+            last_l_r_clk = l_r_clk;
             
             for (i = 0; i < num_samples; i = i + 1) begin
-                // Generate different test signals
-                if (signal_type == "IMPULSE") begin
-                    if (i == 100) audio_in = 24'h400000;  // 0.5 amplitude
-                    else audio_in = 24'h000000;
-                end else if (signal_type == "SINE_100HZ") begin
-                    sample_val = 0.5 * $sin(2.0 * 3.14159 * 100.0 * i / SAMPLE_RATE);
-                    audio_in = $rtoi(sample_val * (2.0**23));
-                end else if (signal_type == "SINE_1KHZ") begin
-                    sample_val = 0.5 * $sin(2.0 * 3.14159 * 1000.0 * i / SAMPLE_RATE);
-                    audio_in = $rtoi(sample_val * (2.0**23));
-                end else if (signal_type == "SINE_10KHZ") begin
-                    sample_val = 0.5 * $sin(2.0 * 3.14159 * 10000.0 * i / SAMPLE_RATE);
-                    audio_in = $rtoi(sample_val * (2.0**23));
-                end else if (signal_type == "SWEEP") begin
-                    sample_val = 0.5 * $sin(2.0 * 3.14159 * (20.0 + 19980.0*i/num_samples) * i / SAMPLE_RATE);
-                    audio_in = $rtoi(sample_val * (2.0**23));
-                end else begin  // DC or default
-                    audio_in = 24'h100000;  // 0.125 amplitude DC
+                // Generate test signal
+                if (frequency_hz == 0.0) begin
+                    // DC signal
+                    audio_in = real_to_q214(amplitude);
+                end else if (frequency_hz < 0.0) begin
+                    // Impulse
+                    if (i == 10)
+                        audio_in = real_to_q214(amplitude);
+                    else
+                        audio_in = 16'h0000;
+                end else begin
+                    // Sine wave
+                    sample_val = amplitude * $sin(2.0 * PI * frequency_hz * i / SAMPLE_RATE);
+                    audio_in = real_to_q214(sample_val);
                 end
                 
-                audio_valid = 1;
+                // Wait for l_r_clk edge (new sample)
                 @(posedge clk);
-                audio_valid = 0;
-                
-                // Wait for output
-                for (j = 0; j < CLK_PER_SAMPLE*2; j = j + 1) begin
+                while (l_r_clk == last_l_r_clk) begin
                     @(posedge clk);
-                    if (audio_out_valid) begin
-                        update_stats(audio_out);
-                        j = CLK_PER_SAMPLE*2;  // Exit wait loop
-                    end
                 end
+                last_l_r_clk = l_r_clk;
+                
+                // Collect output sample (with small delay to allow filter to settle)
+                repeat(10) @(posedge clk);
+                update_stats(audio_out);
             end
-            
-            // Wait for pipeline to flush
-            repeat(1000) @(posedge clk);
         end
     endtask
     
     // Main test sequence
     initial begin
         $display("\n========================================");
-        $display("THREE BAND EQ COEFFICIENT TEST");
+        $display("THREE BAND EQ CASCADE COEFFICIENT TEST");
+        $display("Testing with Q2.14 format coefficients");
         $display("========================================\n");
         
         // Initialize
-        rst_n = 0;
+        reset = 0;
         audio_in = 0;
-        audio_valid = 0;
         test_num = 0;
         error_count = 0;
         
-        // Set default "safe" coefficients (unity gain allpass)
-        b0_low = 18'h10000;  b1_low = 18'h00000;  b2_low = 18'h00000;
-        a1_low = 18'h00000;  a2_low = 18'h00000;
-        b0_mid = 18'h10000;  b1_mid = 18'h00000;  b2_mid = 18'h00000;
-        a1_mid = 18'h00000;  a2_mid = 18'h00000;
-        b0_high = 18'h10000; b1_high = 18'h00000; b2_high = 18'h00000;
-        a1_high = 18'h00000; a2_high = 18'h00000;
-        gain_low = 8'h40;   // 0.25 * 256 = 64
-        gain_mid = 8'h40;
-        gain_high = 8'h40;
+        // Initialize with zero coefficients
+        low_b0 = 0; low_b1 = 0; low_b2 = 0; low_a1 = 0; low_a2 = 0;
+        mid_b0 = 0; mid_b1 = 0; mid_b2 = 0; mid_a1 = 0; mid_a2 = 0;
+        high_b0 = 0; high_b1 = 0; high_b2 = 0; high_a1 = 0; high_a2 = 0;
         
         repeat(10) @(posedge clk);
-        rst_n = 1;
-        repeat(10) @(posedge clk);
+        reset = 1;
+        repeat(100) @(posedge clk);
         
-        // TEST 1: Unity gain passthrough (your known working coefficients)
-        // REPLACE THESE WITH YOUR ACTUAL WORKING COEFFICIENTS!
+        // TEST 1: Your current coefficients (all b0 = 0x4000 = 1.0)
         test_num = 1;
         set_coefficients(
-            18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,  // Low
-            18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,  // Mid
-            18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,  // High
-            8'h40, 8'h40, 8'h40  // Gains
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Low
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Mid
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000   // High
         );
-        send_test_signal(480, "SINE_1KHZ");
-        print_results("Unity gain with 1kHz sine");
+        send_test_signal(100, 1000.0, 0.5);  // 1kHz sine, 0.5 amplitude
+        print_results("Current coefficients (0x4000) with 1kHz sine");
         
-        // TEST 2: Test with impulse
+        // TEST 2: Check if 0x4000 is really 1.0 or 0.25
         test_num = 2;
-        send_test_signal(1000, "IMPULSE");
-        print_results("Unity gain with impulse");
+        $display("Checking Q2.14 interpretation:");
+        $display("  0x4000 decimal = %0d", 16'sh4000);
+        $display("  As Q2.14: %0d / 16384 = %f", 16'sh4000, q214_to_real(16'sh4000));
+        $display("  Cascade gain: %f^3 = %f", q214_to_real(16'sh4000), 
+            q214_to_real(16'sh4000) * q214_to_real(16'sh4000) * q214_to_real(16'sh4000));
         
-        // TEST 3: Low frequency (100Hz)
+        // TEST 3: True unity gain (if 0x4000 was 0.25, try compensating)
         test_num = 3;
-        send_test_signal(480, "SINE_100HZ");
-        print_results("Unity gain with 100Hz sine");
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Low: 1.0
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Mid: 1.0
+            16'sh7FFF, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000   // High: ~2.0 (compensate)
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("Compensated high band (0x7FFF)");
         
-        // TEST 4: High frequency (10kHz)
+        // TEST 4: All unity - try 0x4000 for all
         test_num = 4;
-        send_test_signal(480, "SINE_10KHZ");
-        print_results("Unity gain with 10kHz sine");
+        set_coefficients(
+            16'h4000, 16'h0000, 16'h0000, 16'h0000, 16'h0000,
+            16'h4000, 16'h0000, 16'h0000, 16'h0000, 16'h0000,
+            16'h4000, 16'h0000, 16'h0000, 16'h0000, 16'h0000
+        );
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All 0x4000 unsigned");
         
-        // TEST 5: Frequency sweep
+        // TEST 5: Impulse response
         test_num = 5;
-        send_test_signal(4800, "SWEEP");
-        print_results("Unity gain with frequency sweep");
+        set_coefficients(
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000
+        );
+        send_test_signal(50, -1.0, 0.5);  // Impulse
+        print_results("Impulse response");
         
-        // TEST 6: Zero coefficients (should cause silence)
+        // TEST 6: DC response
         test_num = 6;
-        set_coefficients(
-            18'h00000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            18'h00000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            18'h00000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            8'h40, 8'h40, 8'h40
-        );
-        send_test_signal(480, "SINE_1KHZ");
-        print_results("Zero coefficients (expect silence)");
+        send_test_signal(50, 0.0, 0.5);  // DC
+        print_results("DC response");
         
-        // TEST 7: High gain coefficients
+        // TEST 7: Low frequency (100Hz)
         test_num = 7;
-        set_coefficients(
-            18'h20000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            18'h20000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            18'h20000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            8'h40, 8'h40, 8'h40
-        );
-        send_test_signal(480, "SINE_1KHZ");
-        print_results("2x gain coefficients");
+        send_test_signal(100, 100.0, 0.5);
+        print_results("100Hz sine");
         
-        // TEST 8: Negative b0 coefficients
+        // TEST 8: High frequency (10kHz)
         test_num = 8;
-        set_coefficients(
-            -18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            -18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            -18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,
-            8'h40, 8'h40, 8'h40
-        );
-        send_test_signal(480, "SINE_1KHZ");
-        print_results("Negative b0 (phase inversion)");
+        send_test_signal(100, 10000.0, 0.5);
+        print_results("10kHz sine");
         
-        // TEST 9: Non-zero feedback coefficients (potential instability)
+        // TEST 9: Try bypassing cascade - only high band active
         test_num = 9;
         set_coefficients(
-            18'h10000, 18'h00000, 18'h00000, 18'h08000, 18'h00000,
-            18'h10000, 18'h00000, 18'h00000, 18'h08000, 18'h00000,
-            18'h10000, 18'h00000, 18'h00000, 18'h08000, 18'h00000,
-            8'h40, 8'h40, 8'h40
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Low: passthrough
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000,  // Mid: passthrough
+            16'sh4000, 16'sh0000, 16'sh0000, 16'sh0000, 16'sh0000   // High: passthrough
         );
-        send_test_signal(480, "SINE_1KHZ");
-        print_results("With feedback a1=0.5");
-        
-        // TEST 10: Typical lowpass filter coefficients
-        test_num = 10;
-        set_coefficients(
-            18'h02000, 18'h04000, 18'h02000, -18'h0F000, 18'h08000,  // Low pass
-            18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,   // Unity mid
-            18'h10000, 18'h00000, 18'h00000, 18'h00000, 18'h00000,   // Unity high
-            8'h40, 8'h40, 8'h40
-        );
-        send_test_signal(480, "SINE_100HZ");
-        print_results("Lowpass filter with 100Hz (should pass)");
-        
-        test_num = 11;
-        send_test_signal(480, "SINE_10KHZ");
-        print_results("Lowpass filter with 10kHz (should attenuate)");
+        send_test_signal(100, 1000.0, 0.5);
+        print_results("All stages 1.0 gain");
         
         // Summary
         $display("\n========================================");
@@ -344,19 +345,18 @@ module tb_three_band_eq_coeff_test;
         $display("========================================");
         $display("Total tests: %0d", test_num);
         $display("Failed tests: %0d", error_count);
-        $display("========================================\n");
-        
         if (error_count == 0)
-            $display("ALL TESTS PASSED!\n");
+            $display("ALL TESTS PASSED!");
         else
-            $display("SOME TESTS FAILED - Review results above\n");
+            $display("SOME TESTS FAILED - Review results above");
+        $display("========================================\n");
         
         $finish;
     end
     
     // Timeout watchdog
     initial begin
-        #(CLK_PERIOD * 1000000);  // 20ms timeout
+        #100ms;
         $display("ERROR: Test timeout!");
         $finish;
     end
