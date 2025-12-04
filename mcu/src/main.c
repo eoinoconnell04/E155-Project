@@ -44,7 +44,7 @@ while(1){
         values[3]    // high band knob
     ); */
 
-    ThreeBandCoeffs coeffs = simple_test_filters(0);
+    ThreeBandCoeffs coeffs = simpleTestFilters(0);
     
     
     // -----------------------------
