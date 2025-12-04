@@ -1,1 +1,0 @@
-C:/lscc/radiant/2024.2/questasim/win64/VisualizerRls/bin/viscom.exe -nolock -quiet -jmem_size 393216 work.test1(fast) -quiet -auto_acc_if_foreign -work work -L iCE40UP +acc -allow_unnamed -o _opt -id 3-00be43eaec35-693080fe-2be-54d4 +__design_bin_path+C:/Users/eoconnell/E155-Project/fpga/src/cascade_working +__betafsm
