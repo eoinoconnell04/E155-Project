@@ -155,10 +155,10 @@ static inline BiquadQ14 unity_gain_biquad(void)
 }
 
 // -----------------------------
-// Low-Shelf (Q2.14 Output)
+// Low Band: Highpass Filter at 400 Hz (Q2.14 Output)
 // -----------------------------
 
-static BiquadQ14 low_shelf_coeffs_q14(float pot)
+static BiquadQ14 low_highpass_coeffs_q14(float pot)
 {
     float gainDB = pot_to_gain_db(pot);
     
@@ -167,18 +167,30 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
         return unity_gain_biquad();
     }
     
-    float A = db_to_amplitude(gainDB);  // Use db/40 for shelving (RBJ standard)
+    // Use pot to control the amount of highpass filtering
+    // pot = 1.0 -> unity (no filtering)
+    // pot = 0.0 -> full highpass (cuts bass by -15 dB)
+    
+    // Calculate Q based on pot (higher Q = sharper cutoff)
+    // At pot=0, use Q=0.707 (Butterworth)
+    // As pot increases, reduce Q to make filter gentler
+    float filter_Q = Q * (1.0f - pot * 0.5f);
+    if (filter_Q < 0.3f) filter_Q = 0.3f;
+    
+    // 2nd-order highpass at 400 Hz
+    // Standard biquad highpass formula
     float w0 = 2.0f * M_PI * 400.0f / FS;
-    float alpha = sinf(w0) / (2.0f * Q);
+    float alpha = sinf(w0) / (2.0f * filter_Q);
     float cosw0 = cosf(w0);
-
-    float b0 =    A*((A+1) - (A-1)*cosw0 + 2*sqrtf(A)*alpha);
-    float b1 =  2*A*((A-1) - (A+1)*cosw0);
-    float b2 =    A*((A+1) - (A-1)*cosw0 - 2*sqrtf(A)*alpha);
-    float a0 =        (A+1) + (A-1)*cosw0 + 2*sqrtf(A)*alpha;
-    float a1 =   -2*((A-1) + (A+1)*cosw0);
-    float a2 =        (A+1) + (A-1)*cosw0 - 2*sqrtf(A)*alpha;
-
+    
+    // Highpass: H(s) = s^2 / (s^2 + s*w0/Q + w0^2)
+    float b0 = (1.0f + cosw0) / 2.0f;
+    float b1 = -(1.0f + cosw0);
+    float b2 = (1.0f + cosw0) / 2.0f;
+    float a0 = 1.0f + alpha;
+    float a1 = -2.0f * cosw0;
+    float a2 = 1.0f - alpha;
+    
     // Normalize by a0
     b0 /= a0;
     b1 /= a0;
@@ -186,9 +198,15 @@ static BiquadQ14 low_shelf_coeffs_q14(float pot)
     a1 /= a0;
     a2 /= a0;
     
+    // Apply gain scaling based on pot
+    // pot=1.0: gain=1.0 (unity)
+    // pot=0.0: gain based on gainDB
+    float linear_gain = powf(10.0f, gainDB / 20.0f);
+    b0 *= linear_gain;
+    b1 *= linear_gain;
+    b2 *= linear_gain;
+    
     // NOTE: FPGA negates a1 and a2 for us, so we send standard form
-    // Standard form: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
-    // FPGA converts to: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] + (-a1)*y[n-1] + (-a2)*y[n-2]
 
     return biquad_float_to_q14(b0, b1, b2, a1, a2);
 }
@@ -297,7 +315,7 @@ ThreeBandCoeffs calcCoeffUpdate(uint16_t adc_low, uint16_t adc_mid, uint16_t adc
     pot_high_smooth = adc_to_pot(high_filtered);
     
     // Generate coefficients for each band
-    coeffs.low  = low_shelf_coeffs_q14(pot_low_smooth);
+    coeffs.low  = low_highpass_coeffs_q14(pot_low_smooth);  // Highpass at 400 Hz
     coeffs.mid  = mid_peaking_coeffs_q14(pot_mid_smooth);
     coeffs.high = high_shelf_coeffs_q14(pot_high_smooth);
     
