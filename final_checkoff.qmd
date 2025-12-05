@@ -11,6 +11,8 @@ format:
 
 We met all of our specifications today, as we finally got our filtering to work correctly. This was an extremely difficult project that we both worked ~100 hours on each. We learned a lot about audio filtering, communication protocols, writting pipelined digital circuits, and perseverance. 
 
+All of our code is available on our [github](https://github.com/eoinoconnell04/E155-Project).
+
 ### Functional Specifications
 
 - [ ] **Input / Output**:  
@@ -62,3 +64,23 @@ Eventually we worked our way up to the top level test bench, which we see here:
 <figcaption> Figure 1: Top level testbench waveforms.</figcaption>
 
 Here we modeled both I2S inputs and outputs from the ADC and DAC, and SPI inputs from the MCU. We were able to confirm that the audio coming in from I2S was being correctly filtered given the current coefficients coming in from the MCU.
+
+### Technical Documentation
+
+![](images/block_diagram.png)
+
+<figcaption> Figure 2: System Level Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+![](images/rtl_block_diagram.png)
+
+<figcaption> Figure 3: RTL Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+![](images/schematic.png)
+
+<figcaption> Figure 3: RTL Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
