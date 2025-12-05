@@ -160,9 +160,9 @@ This project took ~200 hours to complete between the two of us.
 
 ![](images/box.jpeg)
 ![](images/knobs.jpeg)
-![](images/interals.jpeg)
+![](images/internals.jpeg)
 
-{{< video https://www.youtube.com/shorts/qDhX_24WmPo?si=PED0XMGnXm1KNI5j >}}
+{{< video https://youtube.com/shorts/bFjX2Ix37MM?feature=share >}}
 
 # Acknowledgements
 
