@@ -7,13 +7,7 @@ format:
     theme: cosmo  
 ---
 
-## Abstract
-
-We met all of our specifications today, as we finally got our filtering to work correctly. This was an extremely difficult project that we both worked ~100 hours on each. We learned a lot about audio filtering, communication protocols, writting pipelined digital circuits, and perseverance. 
-
-All of our code is available on our [github](https://github.com/eoinoconnell04/E155-Project).
-
-### Team Members:
+## About Us:
 
 **Drake Gonzales**: 
 
@@ -31,45 +25,82 @@ I'm Eoin O'Connell, a junior at Harvey Mudd College studying computer and electr
 [LinkedIn](https://www.linkedin.com/in/eoinoconnell04/)
 [Portfolio](https://eoinoconnell04.github.io/E155-Portfolio/)
 
-### Functional Specifications
 
-- [ ] **Input / Output**:  
-  Audio is input via a 1/8-inch aux cable and output through a speaker in the digital lab.
+## Abstract
 
-  Our project takes a standard 1/8-inch
+This project implements a **real-time 3-band equalizer** that can independently adjust low, mid, and high frequencies of an audio signal. Audio is input via a **1/8-inch auxiliary cable**, digitized by an **ADC**, processed on an **FPGA**, and output through a **DAC** to stereo speakers.
 
-- [ ] **Bypass Behavior**:  
-  When all EQ knobs are in their default (neutral) positions, the output should closely match the original input audio.
+Three potentiometers allow live control of each frequency band, enabling hands-on EQ adjustment with **minimal latency**.
 
-  The coefficients snap to unity gain when close enough to the unfiltered position to ensure true bypass of original audio. Even when very close to unity gain but not, the audio is indistinguishable.
+### Features
+- Three adjustable bands:
+  - Low: ~100–400 Hz
+  - Mid: ~400 Hz–2 kHz
+  - High: ~2–8 kHz
+- Real-time digital filtering on an **iCE40 UltraPlus FPGA**
+- **MCU-controlled** filter coefficients sent via SPI
+- Stereo input/output using I²S protocol
+- Bypass mode preserves original audio when knobs are neutral
 
-- [ ] **Frequency Bands**:  
-  The equalizer will feature three independently adjustable bands:
-  - **Low band:** ~100 Hz – 400 Hz  
-  - **Mid band:** ~400 Hz – 2 kHz  
-  - **High band:** ~2 kHz – 8 kHz  
+### Hardware
+- iCE40 UltraPlus FPGA
+- STM32L432KC MCU
+- PCM1808 ADC
+- PCM5102 DAC
+- 3 x potentiometers for EQ control
+- Standard 1/8-inch audio input
 
-- [ ] **Control Interface:**  
-  Each band will have its own **potentiometer** for analog gain adjustment (boost/cut).
+### Usage
+1. Connect an audio source to the ADC.
+2. Adjust low, mid, and high potentiometers to modify EQ in real time.
+3. Audio output is sent to speakers via the DAC.
 
-  We have three potentiometers, one for low, mid, and high.
+All of our code is available on our [github](https://github.com/eoinoconnell04/E155-Project).
 
-- [ ] **Latency:**  
-  The system will maintain real-time operation with **< 50 ms latency**, ensuring audio remains synchronized with video sources such as YouTube.
+## Microcontroller overview
 
-  We use an audio visual sync test to get a rough measurement of latency. Humans can detect latency that is off by around 30-50 ms, and we have no noticable latency. We have a pipelined design where our output is delayed by 3 audio samples, which are at 63 kHz, which calculates to a latency on the order of 50 $\micro$ seconds.
+The MCU within our project was designed to take in inputs from three potentiometers, and create filter coefficient calculations with moving average filtering for a three-band equalizer. A script was written to calibrate the knobs based on sampling frequency, and moving average functions. The MCU was then tasked to send these filter coefficients over SPI to the FPGA. SPI transactions were verified using a Logic Analyzer. 
 
-- [ ] **Filtering Performance:**  
-  Each EQ band must correctly attenuate its designated frequency range without introducing distortion or unintended interaction between bands. 
+## FPGA overview
 
-  We test with playing a song while also inputing a tone of a certain frequency. We test the attuenation of that tone, and the effect on the rest of the song to measure the interaction. For example, if we are playing a 1000 kHz tone, and we attenuate mids, that tone should be reduced while high frequencies in the song are not.
+The FPGA on the other hand was used as the main brain for this project. To be able to recieve audio from the external ADC, an I2S peripheral, made by Lattice, was used to control the RX and TX internal modules. The RX module was designed to input/ latch the audio in, while the TX was used to create the necessary bit clk, LR clk, and latch the output audio. Along side this, the FPGA took in  SPI inputs from the MCU via written SPI verilog. The filtering was done using the internal peripheral MAC16 (Multiply-Accumulate) and was processed using a 16-bit biqud IRR filter fsm. 
 
-- [ ] **Theoretical Frequency Response Graphing:**  
-  The final report will include theoretical frequency responses and graph bode plots as a function of potentiometer values.
+# Technical Documentation
 
-    Frequency Response Simulation: [Interactive Demo](https://eoinoconnell04.github.io/E155-Portfolio/E155-Project/bode_plot_demo.html)
-    
-### Testbenches
+![](images/block_diagram.png)
+
+<figcaption> Figure 1: System Level Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+![](images/rtl_block_diagram.png)
+
+<figcaption> Figure 2: Top Level RTL Block Diagram.</figcaption>
+
+This is the top level RTL block diagram of our design. For clarity, we didn't expand the filter module or the spi module, but the internals of these modules are shown below. Additionally, we represented all coefficients as an array of 15 different 16 bit signals. In practice, our RTL has 15 different ports, on for each coefficient.
+
+![](images/filter_block_diagram.png)
+
+<figcaption> Figure 3: Filter RTL Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+![](images/schematic.png)
+
+<figcaption> Figure 4: RTL Block Diagram.</figcaption>
+
+Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+
+![](images/FSM_diagram.png)
+
+<figcaption> Figure 5: Filtering FSM Diagram.</figcaption>
+
+This is the diagram for the finite state machine that time multiplexes the DSP slice to do the multiply accumulate operations for the IIR filter. Our design contains 3 instantiations of this FSM, as we have 3 cascading filters.
+
+# Testing and Methodology
+
+## Testbenches
 
 We thoroughly test benched our RTL throughout the design process to get a working output. We could never have gotten our pipelined filter and multiply accumulate to work otherwise.
 
@@ -79,42 +110,13 @@ Eventually we worked our way up to the top level test bench, which we see here:
 
 ![](images/top_waveforms.png)
 
-<figcaption> Figure 1: Top level testbench waveforms.</figcaption>
+<figcaption> Figure 6: Top level testbench waveforms.</figcaption>
 
 Here we modeled both I2S inputs and outputs from the ADC and DAC, and SPI inputs from the MCU. We were able to confirm that the audio coming in from I2S was being correctly filtered given the current coefficients coming in from the MCU.
 
-### Technical Documentation
+## Decibal Meter
 
-![](images/block_diagram.png)
-
-<figcaption> Figure 2: System Level Block Diagram.</figcaption>
-
-Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
-
-![](images/rtl_block_diagram.png)
-
-<figcaption> Figure 3: Top Level RTL Block Diagram.</figcaption>
-
-This is the top level RTL block diagram of our design. For clarity, we didn't expand the filter module or the spi module, but the internals of these modules are shown below. Additionally, we represented all coefficients as an array of 15 different 16 bit signals. In practice, our RTL has 15 different ports, on for each coefficient.
-
-![](images/filter_block_diagram.png)
-
-<figcaption> Figure 4: Filter RTL Block Diagram.</figcaption>
-
-Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
-
-![](images/schematic.png)
-
-<figcaption> Figure 5: RTL Block Diagram.</figcaption>
-
-Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
-
-
-![](images/FSM_diagram.png)
-
-<figcaption> Figure 6: Filtering FSM Diagram.</figcaption>
-
-This is the diagram for the finite state machine that time multiplexes the DSP slice to do the multiply accumulate operations for the IIR filter. Our design contains 3 instantiations of this FSM, as we have 3 cascading filters.
+We used a decibal meter app on our phone to analyze the frequency response of our filters. We would play a tone on a computer connected to our filter input, and measure the decibals with each band open and at full attenuation. We found a max of around 1 dB drop when attenuating a band that did not include the target frequency (ie. a high pitch sound and cutting out mid frequencies), and over 10 dB when attenuating the target frequencies. This is a very significant reduction which we are very happy with. We could make the attenuation even steeper by adjusting the coefficients, or change our knobs to allow for boosts as well as cuts.
 
 ## Acknowledgements
 
