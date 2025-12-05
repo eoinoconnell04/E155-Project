@@ -1,0 +1,64 @@
+---
+title: "Project: Final Checkoff"
+author: "Drake Gonzales & Eoin O'Connell"
+date: "Dec. 4, 2025"
+format: 
+  html:
+    theme: cosmo  
+---
+
+## Overview
+
+We met all of our specifications today, as we finally got our filtering to work correctly. This was an extremely difficult project that we both worked ~100 hours on each. We learned a lot about audio filtering, communication protocols, writting pipelined digital circuits, and perseverance. 
+
+### Functional Specifications
+
+- [ ] **Input / Output**:  
+  Audio is input via a 1/8-inch aux cable and output through a speaker in the digital lab.
+
+  Our project takes a standard 1/8-inch
+
+- [ ] **Bypass Behavior**:  
+  When all EQ knobs are in their default (neutral) positions, the output should closely match the original input audio.
+
+  The coefficients snap to unity gain when close enough to the unfiltered position to ensure true bypass of original audio. Even when very close to unity gain but not, the audio is indistinguishable.
+
+- [ ] **Frequency Bands**:  
+  The equalizer will feature three independently adjustable bands:
+  - **Low band:** ~100 Hz – 400 Hz  
+  - **Mid band:** ~400 Hz – 2 kHz  
+  - **High band:** ~2 kHz – 8 kHz  
+
+- [ ] **Control Interface:**  
+  Each band will have its own **potentiometer** for analog gain adjustment (boost/cut).
+
+  We have three potentiometers, one for low, mid, and high.
+
+- [ ] **Latency:**  
+  The system will maintain real-time operation with **< 50 ms latency**, ensuring audio remains synchronized with video sources such as YouTube.
+
+  We use an audio visual sync test to get a rough measurement of latency. Humans can detect latency that is off by around 30-50 ms, and we have no noticable latency. We have a pipelined design where our output is delayed by 3 audio samples, which are at 63 kHz, which calculates to a latency on the order of 50 $\micro$ seconds.
+
+- [ ] **Filtering Performance:**  
+  Each EQ band must correctly attenuate its designated frequency range without introducing distortion or unintended interaction between bands. 
+
+  We test with playing a song while also inputing a tone of a certain frequency. We test the attuenation of that tone, and the effect on the rest of the song to measure the interaction. For example, if we are playing a 1000 kHz tone, and we attenuate mids, that tone should be reduced while high frequencies in the song are not.
+
+- [ ] **Theoretical Frequency Response Graphing:**  
+  The final report will include theoretical frequency responses and graph bode plots as a function of potentiometer values.
+
+    Frequency Response Simulation: [Interactive Demo](https://eoinoconnell04.github.io/E155-Portfolio/E155-Project/bode_plot_demo.html)
+    
+### Testbenches
+
+We thoroughly test benched our RTL throughout the design process to get a working output. We could never have gotten our pipelined filter and multiply accumulate to work otherwise.
+
+Of course we started by testbenching the most basic modules and working our way up. We were dealing with zero output for the vast majority of the project. 
+
+Eventually we worked our way up to the top level test bench, which we see here:
+
+![](images/top_waveforms.png)
+
+<figcaption> Figure 1: Top level testbench waveforms.</figcaption>
+
+Here we modeled both I2S inputs and outputs from the ADC and DAC, and SPI inputs from the MCU. We were able to confirm that the audio coming in from I2S was being correctly filtered given the current coefficients coming in from the MCU.
