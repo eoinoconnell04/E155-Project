@@ -7,11 +7,29 @@ format:
     theme: cosmo  
 ---
 
-## Overview
+## Abstract
 
 We met all of our specifications today, as we finally got our filtering to work correctly. This was an extremely difficult project that we both worked ~100 hours on each. We learned a lot about audio filtering, communication protocols, writting pipelined digital circuits, and perseverance. 
 
 All of our code is available on our [github](https://github.com/eoinoconnell04/E155-Project).
+
+### Team Members:
+
+**Drake Gonzales**: 
+
+> **_Bio:_** 
+Hello! My name is Drake Gonzales and I am a Junior Engineering major at Harvey Mudd College. I am interested in studying computer and electrical engineering, with a specific focus in Lithography.
+
+[LinkedIn](https://www.linkedin.com/in/drake-gonzales-a953092a6/)
+[Portfolio](https://swayngee.github.io/e155-lab1/)
+
+**Eoin O'Connell**: 
+
+> **_Bio:_** 
+I'm Eoin O'Connell, a junior at Harvey Mudd College studying computer and electrical engineering. My work focuses on digital signal processing and FPGA-based systems design. Outside the lab, I compete in cross country and track and field for the Claremont-Mudd-Scripps teams. When I'm not running or working, I am often playing guitar or piano as playing music is one of my core passions.
+
+[LinkedIn](https://www.linkedin.com/in/eoinoconnell04/)
+[Portfolio](https://eoinoconnell04.github.io/E155-Portfolio/)
 
 ### Functional Specifications
 
@@ -97,3 +115,11 @@ Here we see to system level diagram of our project. It highlights the different 
 <figcaption> Figure 6: Filtering FSM Diagram.</figcaption>
 
 This is the diagram for the finite state machine that time multiplexes the DSP slice to do the multiply accumulate operations for the IIR filter. Our design contains 3 instantiations of this FSM, as we have 3 cascading filters.
+
+## Acknowledgements
+
+We would like to thank Prof. Matthew Spencer for teaching us so much this semester. Additionally, a sepcial thanks to Xavier Walter for helping us debug countless problems this year and giving us the tools we needed to be successful. Finally, thanks to the rest of the HMC lab and stockroom staff.
+
+## References
+
+[Lattice iCE40 UltraPlus I2S IP General purpose I2S controller](https://www.latticesemi.com/products/designsoftwareandip/intellectualproperty/ipcore/ipcores04/i2s).
