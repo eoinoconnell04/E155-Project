@@ -83,6 +83,14 @@ The FPGA on the other hand was used as the main brain for this project. To be ab
 
 **Total external parts cost:** ~**$21**.
 
+### New Hardware Overview
+
+By the time we started this project, we were very familiar with our board with the iCE40 FGPA and STM32 MCU. One key aspect of this project was choosing some new hardware to learn about, and we choose to implement an external ADC and DAC that communciated over I2S. We had already implemented other communication protocols for previous labs in E155, including SPI and UART, so it was easy to understand the timing diagrams and pick up I2S. 
+
+The ADC and DAC communicate with the FPGA, and our FPGA manuafacturer, Lattice Semiconductor, provides a [library](https://www.latticesemi.com/products/designsoftwareandip/intellectualproperty/ipcore/ipcores04/i2s) with a controller for I2S specifically for our FPGA. Even with the working controllers, it took a few long days to succesfully pass through unfiltered audio through ADC, FPGA, and DAC to hear our first audio.
+
+Additionally, we used the built in ADC periferal for the first time on our microcontroller. This required written a new driver to enable and interface with the periferal, and this was used to measure the analog values from our potentiometer. The reason why we did not use this for our audio, was that audio latency was one of our key priorities, and this would have introduced extra latency and also resulted in lower quality audio.
+
 ---
 
 # Technical Documentation
@@ -137,6 +145,24 @@ Here we modeled both I2S inputs and outputs from the ADC and DAC, and SPI inputs
 ## Decibal Meter
 
 We used a decibal meter app on our phone to analyze the frequency response of our filters. We would play a tone on a computer connected to our filter input, and measure the decibals with each band open and at full attenuation. We found a max of around 1 dB drop when attenuating a band that did not include the target frequency (ie. a high pitch sound and cutting out mid frequencies), and over 10 dB when attenuating the target frequencies. This is a very significant reduction which we are very happy with. We could make the attenuation even steeper by adjusting the coefficients, or change our knobs to allow for boosts as well as cuts.
+
+# Results 
+
+The results in this lab were completed as laid out within the project proposal. The FPGA was designed to perform real time IRR filtering, handle i2S communication, and recieve SPI. the MCU on the other hand was to compute the IRR coefficients based on potentiometer readings, and setup SPI. The goal of our project was also to setup an external ADC and DAC, which was completed duing the midpoint project checkoff. Our final deliverables were successfully completed as 3 potentiometers can be used to control the mid, low, and high frequency pitch of incoming audio. Audio is inputed into our system using external jacks and was scaled using op-amps. A couple risks that we were addressing throughout the project were latency, clock synchronization, 16-bit data paths, and exceeeding the internal LUT's of the FPGA. With the completion of the project each risk was addressed and completed either visually and/or using a logic analyzer. 
+
+Each band independently attenuates without interfering with the other bands, as we measured with the decibal meter and subjective listening tests. Each band has **>10 dB** reduction measured with a microphone, and this is very noticable when listening. We are very happy with the filtering performance.
+
+We were also very satisfied with the latency we were able to achieve. Our main goal was to have imperceptible audio latency, and we achieved this by orders of magnitude.
+
+We use an audio visual sync test to get a rough measurement of latency. Humans can detect latency that is off by around 30-50 ms, and we have no noticable latency. We have a pipelined design where our output is delayed by 3 audio samples, which are at 63 kHz, which calculates to a latency on the order of 50 $\micro$ seconds.
+
+This project took ~200 hours to complete between the two of us.
+
+![](images/box.jpeg)
+![](images/knobs.jpeg)
+![](images/interals.jpeg)
+
+{{< video https://www.youtube.com/shorts/qDhX_24WmPo?si=PED0XMGnXm1KNI5j >}}
 
 # Acknowledgements
 
