@@ -1,5 +1,5 @@
 ---
-title: "Project: Final Checkoff"
+title: "Project Final Report"
 author: "Drake Gonzales & Eoin O'Connell"
 date: "Dec. 4, 2025"
 format: 
@@ -75,12 +75,25 @@ Here we see to system level diagram of our project. It highlights the different 
 
 ![](images/rtl_block_diagram.png)
 
-<figcaption> Figure 3: RTL Block Diagram.</figcaption>
+<figcaption> Figure 3: Top Level RTL Block Diagram.</figcaption>
+
+This is the top level RTL block diagram of our design. For clarity, we didn't expand the filter module or the spi module, but the internals of these modules are shown below. Additionally, we represented all coefficients as an array of 15 different 16 bit signals. In practice, our RTL has 15 different ports, on for each coefficient.
+
+![](images/filter_block_diagram.png)
+
+<figcaption> Figure 4: Filter RTL Block Diagram.</figcaption>
 
 Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
 
 ![](images/schematic.png)
 
-<figcaption> Figure 3: RTL Block Diagram.</figcaption>
+<figcaption> Figure 5: RTL Block Diagram.</figcaption>
 
 Here we see to system level diagram of our project. It highlights the different components and the protocols that connect them.
+
+
+![](images/FSM_diagram.png)
+
+<figcaption> Figure 6: Filtering FSM Diagram.</figcaption>
+
+This is the diagram for the finite state machine that time multiplexes the DSP slice to do the multiply accumulate operations for the IIR filter. Our design contains 3 instantiations of this FSM, as we have 3 cascading filters.

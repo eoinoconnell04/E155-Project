@@ -6,6 +6,8 @@ Module Function: Top-level three-band audio equalizer system
 - I2S audio input/output with 24-bit codec
 - SPI interface for real-time coefficient updates
 - Three cascaded biquad IIR filters with dynamic coefficients
+
+CREDIT: We are using lscc_i2s_codec.sv from Lattice Semiconductor as an I2S controller for our ADC & DAC. We also instantiate the MAC16 primitive for our iCE40 FPGA.
 */
 
 module top(input logic sck, sdi, cs,
