@@ -57,6 +57,8 @@ Three potentiometers allow live control of each frequency band, enabling hands-o
 
 All of our code is available on our [github](https://github.com/eoinoconnell04/E155-Project).
 
+Here is a live [Interactive Demo](https://eoinoconnell04.github.io/E155-Portfolio/E155-Project/bode_plot_demo.html) that you can try out to see our simulated frequency response.
+
 ## Microcontroller overview
 
 The MCU within our project was designed to take in inputs from three potentiometers, and create filter coefficient calculations with moving average filtering for a three-band equalizer. A script was written to calibrate the knobs based on sampling frequency, and moving average functions. The MCU was then tasked to send these filter coefficients over SPI to the FPGA. SPI transactions were verified using a Logic Analyzer. 
@@ -162,7 +164,7 @@ This project took ~200 hours to complete between the two of us.
 ![](images/knobs.jpeg)
 ![](images/internals.jpeg)
 
-{{< video https://youtube.com/shorts/bFjX2Ix37MM?feature=share >}}
+{{< video https://www.youtube.com/watch?v=PDhLHjlSDeo >}}
 
 # Acknowledgements
 
